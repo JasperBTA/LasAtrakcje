@@ -1,0 +1,51 @@
+import 'package:drift/drift.dart';
+
+// Używamy UUID jako stringów (TEXT), ponieważ SQLite nie posiada wbudowanego typu UUID.
+// Drift automatycznie zmapuje kolumny dateTime() do unix timestamp w SQLite.
+// W logice aplikacji musimy pamiętać, by operować na `DateTime.now().toUtc()`.
+
+@DataClassName('User')
+class Users extends Table {
+  TextColumn get id => text()(); // UUID z serwera
+  TextColumn get username => text()();
+  
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('Attraction')
+class Attractions extends Table {
+  TextColumn get id => text()(); // UUID z serwera
+  TextColumn get name => text()();
+  RealColumn get latitude => real()();
+  RealColumn get longitude => real()();
+  RealColumn get radius => real()();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  TextColumn get syncStatus => text().withDefault(const Constant('SYNCED'))();
+  
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('Measurement')
+class Measurements extends Table {
+  // UUID generowane po stronie urządzenia mobilnego przy starcie pomiaru
+  // Będzie użyte jako Idempotency Key na backendzie
+  TextColumn get id => text()(); 
+  
+  TextColumn get operatorId => text().references(Users, #id)();
+  TextColumn get attractionId => text().references(Attractions, #id)();
+  
+  // Daty (wymuszone UTC podczas przypisywania)
+  DateTimeColumn get startTime => dateTime()();
+  DateTimeColumn get stopTime => dateTime().nullable()();
+  
+  // Czas trwania kalkulowany lokalnie 
+  IntColumn get totalDurationSeconds => integer().nullable()();
+  
+  // Status synchronizacji: PENDING, SYNCED, FAILED
+  TextColumn get syncStatus => text().withDefault(const Constant('PENDING'))();
+  
+  @override
+  Set<Column> get primaryKey => {id};
+}

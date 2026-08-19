@@ -1,0 +1,44 @@
+# ========================================
+# GŁÓWNY PLIK .gitignore DLA PROJEKTU "Las Odkrywców"
+# ========================================
+
+# 1. Środowiska deweloperskie i systemy operacyjne
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+node_modules/
+
+# 2. BACKEND (Spring Boot / Maven)
+backend/target/
+backend/logs/
+backend/*.log
+backend/out/
+backend/*.mv.db
+backend/*.trace.db
+
+# 3. FRONTEND (Flutter / Dart)
+Flutter app/.dart_tool/
+Flutter app/.pub-cache/
+Flutter app/.pub/
+Flutter app/build/
+Flutter app/.packages
+Flutter app/.flutter-plugins
+Flutter app/.flutter-plugins-dependencies
+Flutter app/ios/.symlinks/
+Flutter app/ios/Pods/
+Flutter app/android/.gradle/
+Flutter app/android/app/build/
+Flutter app/android/local.properties
+Flutter app/android/app/src/debug/
+Flutter app/android/app/src/profile/
+Flutter app/android/key.properties
+Flutter app/*.keystore
+Flutter app/*.jks
+Flutter app/linux/flutter/ephemeral/
+Flutter app/windows/flutter/ephemeral/
+Flutter app/macos/Flutter/ephemeral/
+
+# ========================================
+# Uwaga: Plik docker-compose.yml i Dockerfile dla backendu zostają w repozytorium!
