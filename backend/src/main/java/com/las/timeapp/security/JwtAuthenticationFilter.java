@@ -43,8 +43,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authToken = 
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("Zautoryzowano: " + username + " z rola: " + role);
+                } else {
+                    System.out.println("Brak username w tokenie lub Authentication już istnieje.");
                 }
+            } else {
+                System.out.println("Token został odrzucony przez walidację.");
             }
+        } else {
+            System.out.println("Brak nagłówka Authorization lub nie zaczyna się od Bearer.");
         }
         
         filterChain.doFilter(request, response);
