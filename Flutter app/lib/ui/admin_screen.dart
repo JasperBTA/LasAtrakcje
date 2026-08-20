@@ -6,6 +6,7 @@ import 'package:drift/drift.dart' as drift;
 import '../database/database.dart';
 import '../api/api_client.dart';
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({Key? key}) : super(key: key);
@@ -52,16 +53,40 @@ class _AdminScreenState extends State<AdminScreen> {
 
     try {
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
-      );
+        locationSettings: AndroidSettings(
+          accuracy: LocationAccuracy.best,
+          forceLocationManager: true, // Pozwala zignorować monit o włączenie skanowania Wi-Fi na Androidzie
+        ),
+      ).timeout(const Duration(seconds: 10), onTimeout: () {
+        throw Exception('Nie można złapać sygnału GPS. Wyjdź na zewnątrz!');
+      });
 
-      // Aktualizacja w bazie (zmiana statusu na PENDING)
+      // Aktualizacja w bazie (zmiana statusu na PENDING_UPDATE)
       await (db.update(db.attractions)..where((t) => t.id.equals(attraction.id)))
           .write(AttractionsCompanion(
             latitude: drift.Value(position.latitude),
             longitude: drift.Value(position.longitude),
-            syncStatus: const drift.Value('PENDING'),
+            syncStatus: const drift.Value('PENDING_UPDATE'),
           ));
+
+      // Próba wysłania od razu do serwera (opcjonalne)
+      try {
+        final apiClient = ApiClient();
+        final response = await apiClient.post('/attractions/sync', {
+          'attractions': [{
+            'id': attraction.id,
+            'latitude': position.latitude,
+            'longitude': position.longitude,
+          }]
+        });
+
+        if (response.statusCode == 200) {
+          await (db.update(db.attractions)..where((t) => t.id.equals(attraction.id)))
+              .write(const AttractionsCompanion(syncStatus: drift.Value('SYNCED')));
+        }
+      } catch (e) {
+        // Zostawiamy jako PENDING_UPDATE - zsynchronizuje się później
+      }
 
       Navigator.pop(context); // Zamknij spinner
 
@@ -71,7 +96,7 @@ class _AdminScreenState extends State<AdminScreen> {
     } catch (e) {
       Navigator.pop(context); // Zamknij spinner
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Błąd pobierania pozycji: $e')),
+        SnackBar(content: Text('Błąd: $e')),
       );
     }
   }
@@ -110,6 +135,15 @@ class _AdminScreenState extends State<AdminScreen> {
                   final newName = nameCtrl.text.trim();
                   final newRadius = double.tryParse(radiusCtrl.text) ?? attraction.radius;
                   
+                  // Zapisz lokalnie w bazie od razu ze statusem PENDING_UPDATE
+                  await (db.update(db.attractions)..where((t) => t.id.equals(attraction.id)))
+                    .write(AttractionsCompanion(
+                      name: drift.Value(newName),
+                      radius: drift.Value(newRadius),
+                      isActive: drift.Value(isActive),
+                      syncStatus: const drift.Value('PENDING_UPDATE'),
+                    ));
+
                   // Update API
                   try {
                     final apiClient = ApiClient();
@@ -118,22 +152,17 @@ class _AdminScreenState extends State<AdminScreen> {
                       'radius': newRadius,
                       'isActive': isActive,
                     });
+                    
                     if (response.statusCode == 200) {
-                      // Zapisz lokalnie by odzwierciedlić zmianę na liście (jeśli używamy strumienia z lokalnej bazy)
                       await (db.update(db.attractions)..where((t) => t.id.equals(attraction.id)))
-                        .write(AttractionsCompanion(
-                          name: drift.Value(newName),
-                          radius: drift.Value(newRadius),
-                          isActive: drift.Value(isActive),
-                        ));
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zaktualizowano atrakcję!')));
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Błąd serwera.')));
+                        .write(const AttractionsCompanion(syncStatus: drift.Value('SYNCED')));
                     }
                   } catch (e) {
-                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Błąd połączenia.')));
+                    // Pozostanie jako PENDING_UPDATE i wyśle się przy najbliższej synchronizacji w tle
                   }
+
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zaktualizowano atrakcję!')));
                 },
                 child: const Text('Zapisz'),
               ),
@@ -171,6 +200,7 @@ class _AdminScreenState extends State<AdminScreen> {
           child: StreamBuilder<List<Attraction>>(
             stream: _attractionsStream!,
             builder: (context, snapshot) {
+              if (snapshot.hasError) return Center(child: Text('Błąd bazy danych: ${snapshot.error}'));
               if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
               
               final allAttractions = snapshot.data!;
@@ -186,12 +216,12 @@ class _AdminScreenState extends State<AdminScreen> {
                 itemCount: attractions.length,
                 itemBuilder: (context, index) {
                   final attraction = attractions[index];
-                  final isPending = attraction.syncStatus == 'PENDING';
+                  final isPending = attraction.syncStatus == 'PENDING_UPDATE' || attraction.syncStatus == 'PENDING_CREATE';
                   
                   return ListTile(
                     title: Text(attraction.name),
                     subtitle: Text(
-                      isPending ? 'Niezsynchronizowane' : (attraction.isActive ? 'Zgrane z serwerem' : 'Nieaktywna'),
+                      isPending ? 'Oczekuje na synchronizację' : (attraction.isActive ? 'Zgrane z serwerem' : 'Nieaktywna'),
                       style: TextStyle(color: isPending ? Colors.red : (attraction.isActive ? Colors.green : Colors.grey)),
                     ),
                     trailing: Row(
@@ -463,26 +493,54 @@ class __AddAttractionFormState extends State<_AddAttractionForm> {
 
     setState(() => _isLoading = true);
     try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) throw Exception('Włącz moduł GPS w ustawieniach telefonu!');
+
       var status = await Permission.location.request();
       if (!status.isGranted) throw Exception('Brak uprawnień GPS');
 
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-
-      final apiClient = ApiClient();
-      final response = await apiClient.post('/admin/attractions', {
-        'name': _nameController.text.trim(),
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-        'radius': double.tryParse(_radiusController.text) ?? 10.0,
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      ).timeout(const Duration(seconds: 10), onTimeout: () {
+        throw Exception('Nie można złapać sygnału GPS. Wyjdź na zewnątrz!');
       });
 
-      if (response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Atrakcja dodana na serwer!')));
-          _nameController.clear();
+      final newId = const Uuid().v4();
+      final db = Provider.of<AppDatabase>(context, listen: false);
+
+      await db.into(db.attractions).insert(
+        AttractionsCompanion(
+          id: drift.Value(newId),
+          name: drift.Value(_nameController.text.trim()),
+          latitude: drift.Value(position.latitude),
+          longitude: drift.Value(position.longitude),
+          radius: drift.Value(double.tryParse(_radiusController.text) ?? 10.0),
+          isActive: const drift.Value(true),
+          syncStatus: const drift.Value('PENDING_CREATE'),
+        )
+      );
+
+      // Spróbuj wysłać, ale jak się nie uda, to zostaje w lokalnej bazie jako PENDING_CREATE
+      try {
+        final apiClient = ApiClient();
+        final response = await apiClient.post('/admin/attractions', {
+          'name': _nameController.text.trim(),
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'radius': double.tryParse(_radiusController.text) ?? 10.0,
+        });
+
+        if (response.statusCode == 200) {
+          await (db.update(db.attractions)..where((t) => t.id.equals(newId)))
+              .write(const AttractionsCompanion(syncStatus: drift.Value('SYNCED')));
         }
-      } else {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Błąd: ${response.statusCode}')));
+      } catch (e) {
+        // Ignorujemy - wyśle się przy najbliższej synchronizacji w SyncService
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Atrakcja zapisana pomyślnie!')));
+        _nameController.clear();
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Błąd: $e')));

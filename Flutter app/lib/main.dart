@@ -7,11 +7,15 @@ import 'services/geofence_service.dart';
 import 'ui/login_screen.dart';
 import 'ui/attractions_screen.dart';
 
+import 'services/notification_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  await NotificationService().init();
+  
   final db = AppDatabase();
-  final authService = AuthService();
+  final authService = AuthService(db);
   final syncService = SyncService(db);
   final geofenceService = GeofenceService(db, authService);
 

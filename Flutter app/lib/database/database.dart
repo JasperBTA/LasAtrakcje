@@ -13,7 +13,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -22,8 +22,13 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        if (from == 1 && to == 2) {
+        if (from == 1) {
           await m.addColumn(attractions, attractions.syncStatus);
+        }
+        if (from < 3) {
+          await m.addColumn(users, users.passwordHash);
+          await m.addColumn(users, users.pinHash);
+          await m.addColumn(users, users.role);
         }
       },
     );

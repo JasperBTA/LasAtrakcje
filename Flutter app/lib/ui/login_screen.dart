@@ -20,14 +20,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     final authService = Provider.of<AuthService>(context, listen: false);
     
-    bool success = await authService.login(
+    String? errorMessage = await authService.login(
       _usernameController.text.trim(), 
       _passwordController.text.trim()
     );
 
     setState(() => _isLoading = false);
 
-    if (success && mounted) {
+    if (errorMessage == null && mounted) {
       final geofenceService = Provider.of<GeofenceService>(context, listen: false);
       geofenceService.startGeofencing();
       
@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Błąd logowania. Sprawdź dane.')),
+          SnackBar(content: Text(errorMessage ?? 'Nieznany błąd logowania')),
         );
       }
     }
@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextField(
                   controller: _passwordController,
                   decoration: const InputDecoration(
-                    labelText: 'Hasło',
+                    labelText: 'Hasło lub PIN',
                     prefixIcon: Icon(Icons.lock, color: Color(0xFF2E8B57)),
                   ),
                   obscureText: true,

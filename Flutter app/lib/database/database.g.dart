@@ -19,8 +19,28 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   late final GeneratedColumn<String> username = GeneratedColumn<String>(
       'username', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _passwordHashMeta =
+      const VerificationMeta('passwordHash');
   @override
-  List<GeneratedColumn> get $columns => [id, username];
+  late final GeneratedColumn<String> passwordHash = GeneratedColumn<String>(
+      'password_hash', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _pinHashMeta =
+      const VerificationMeta('pinHash');
+  @override
+  late final GeneratedColumn<String> pinHash = GeneratedColumn<String>(
+      'pin_hash', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+      'role', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('WORKER'));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, username, passwordHash, pinHash, role];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -42,6 +62,24 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     } else if (isInserting) {
       context.missing(_usernameMeta);
     }
+    if (data.containsKey('password_hash')) {
+      context.handle(
+          _passwordHashMeta,
+          passwordHash.isAcceptableOrUnknown(
+              data['password_hash']!, _passwordHashMeta));
+    } else if (isInserting) {
+      context.missing(_passwordHashMeta);
+    }
+    if (data.containsKey('pin_hash')) {
+      context.handle(_pinHashMeta,
+          pinHash.isAcceptableOrUnknown(data['pin_hash']!, _pinHashMeta));
+    } else if (isInserting) {
+      context.missing(_pinHashMeta);
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+          _roleMeta, role.isAcceptableOrUnknown(data['role']!, _roleMeta));
+    }
     return context;
   }
 
@@ -55,6 +93,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       username: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}username'])!,
+      passwordHash: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}password_hash'])!,
+      pinHash: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}pin_hash'])!,
+      role: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}role'])!,
     );
   }
 
@@ -67,12 +111,23 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
 class User extends DataClass implements Insertable<User> {
   final String id;
   final String username;
-  const User({required this.id, required this.username});
+  final String passwordHash;
+  final String pinHash;
+  final String role;
+  const User(
+      {required this.id,
+      required this.username,
+      required this.passwordHash,
+      required this.pinHash,
+      required this.role});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['username'] = Variable<String>(username);
+    map['password_hash'] = Variable<String>(passwordHash);
+    map['pin_hash'] = Variable<String>(pinHash);
+    map['role'] = Variable<String>(role);
     return map;
   }
 
@@ -80,6 +135,9 @@ class User extends DataClass implements Insertable<User> {
     return UsersCompanion(
       id: Value(id),
       username: Value(username),
+      passwordHash: Value(passwordHash),
+      pinHash: Value(pinHash),
+      role: Value(role),
     );
   }
 
@@ -89,6 +147,9 @@ class User extends DataClass implements Insertable<User> {
     return User(
       id: serializer.fromJson<String>(json['id']),
       username: serializer.fromJson<String>(json['username']),
+      passwordHash: serializer.fromJson<String>(json['passwordHash']),
+      pinHash: serializer.fromJson<String>(json['pinHash']),
+      role: serializer.fromJson<String>(json['role']),
     );
   }
   @override
@@ -97,17 +158,34 @@ class User extends DataClass implements Insertable<User> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'username': serializer.toJson<String>(username),
+      'passwordHash': serializer.toJson<String>(passwordHash),
+      'pinHash': serializer.toJson<String>(pinHash),
+      'role': serializer.toJson<String>(role),
     };
   }
 
-  User copyWith({String? id, String? username}) => User(
+  User copyWith(
+          {String? id,
+          String? username,
+          String? passwordHash,
+          String? pinHash,
+          String? role}) =>
+      User(
         id: id ?? this.id,
         username: username ?? this.username,
+        passwordHash: passwordHash ?? this.passwordHash,
+        pinHash: pinHash ?? this.pinHash,
+        role: role ?? this.role,
       );
   User copyWithCompanion(UsersCompanion data) {
     return User(
       id: data.id.present ? data.id.value : this.id,
       username: data.username.present ? data.username.value : this.username,
+      passwordHash: data.passwordHash.present
+          ? data.passwordHash.value
+          : this.passwordHash,
+      pinHash: data.pinHash.present ? data.pinHash.value : this.pinHash,
+      role: data.role.present ? data.role.value : this.role,
     );
   }
 
@@ -115,51 +193,84 @@ class User extends DataClass implements Insertable<User> {
   String toString() {
     return (StringBuffer('User(')
           ..write('id: $id, ')
-          ..write('username: $username')
+          ..write('username: $username, ')
+          ..write('passwordHash: $passwordHash, ')
+          ..write('pinHash: $pinHash, ')
+          ..write('role: $role')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, username);
+  int get hashCode => Object.hash(id, username, passwordHash, pinHash, role);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is User && other.id == this.id && other.username == this.username);
+      (other is User &&
+          other.id == this.id &&
+          other.username == this.username &&
+          other.passwordHash == this.passwordHash &&
+          other.pinHash == this.pinHash &&
+          other.role == this.role);
 }
 
 class UsersCompanion extends UpdateCompanion<User> {
   final Value<String> id;
   final Value<String> username;
+  final Value<String> passwordHash;
+  final Value<String> pinHash;
+  final Value<String> role;
   final Value<int> rowid;
   const UsersCompanion({
     this.id = const Value.absent(),
     this.username = const Value.absent(),
+    this.passwordHash = const Value.absent(),
+    this.pinHash = const Value.absent(),
+    this.role = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   UsersCompanion.insert({
     required String id,
     required String username,
+    required String passwordHash,
+    required String pinHash,
+    this.role = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
-        username = Value(username);
+        username = Value(username),
+        passwordHash = Value(passwordHash),
+        pinHash = Value(pinHash);
   static Insertable<User> custom({
     Expression<String>? id,
     Expression<String>? username,
+    Expression<String>? passwordHash,
+    Expression<String>? pinHash,
+    Expression<String>? role,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (username != null) 'username': username,
+      if (passwordHash != null) 'password_hash': passwordHash,
+      if (pinHash != null) 'pin_hash': pinHash,
+      if (role != null) 'role': role,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
   UsersCompanion copyWith(
-      {Value<String>? id, Value<String>? username, Value<int>? rowid}) {
+      {Value<String>? id,
+      Value<String>? username,
+      Value<String>? passwordHash,
+      Value<String>? pinHash,
+      Value<String>? role,
+      Value<int>? rowid}) {
     return UsersCompanion(
       id: id ?? this.id,
       username: username ?? this.username,
+      passwordHash: passwordHash ?? this.passwordHash,
+      pinHash: pinHash ?? this.pinHash,
+      role: role ?? this.role,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -173,6 +284,15 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (username.present) {
       map['username'] = Variable<String>(username.value);
     }
+    if (passwordHash.present) {
+      map['password_hash'] = Variable<String>(passwordHash.value);
+    }
+    if (pinHash.present) {
+      map['pin_hash'] = Variable<String>(pinHash.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -184,6 +304,9 @@ class UsersCompanion extends UpdateCompanion<User> {
     return (StringBuffer('UsersCompanion(')
           ..write('id: $id, ')
           ..write('username: $username, ')
+          ..write('passwordHash: $passwordHash, ')
+          ..write('pinHash: $pinHash, ')
+          ..write('role: $role, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1008,11 +1131,17 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
   required String id,
   required String username,
+  required String passwordHash,
+  required String pinHash,
+  Value<String> role,
   Value<int> rowid,
 });
 typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
   Value<String> id,
   Value<String> username,
+  Value<String> passwordHash,
+  Value<String> pinHash,
+  Value<String> role,
   Value<int> rowid,
 });
 
@@ -1048,6 +1177,15 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
 
   ColumnFilters<String> get username => $composableBuilder(
       column: $table.username, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get passwordHash => $composableBuilder(
+      column: $table.passwordHash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get pinHash => $composableBuilder(
+      column: $table.pinHash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get role => $composableBuilder(
+      column: $table.role, builder: (column) => ColumnFilters(column));
 
   Expression<bool> measurementsRefs(
       Expression<bool> Function($$MeasurementsTableFilterComposer f) f) {
@@ -1085,6 +1223,16 @@ class $$UsersTableOrderingComposer
 
   ColumnOrderings<String> get username => $composableBuilder(
       column: $table.username, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get passwordHash => $composableBuilder(
+      column: $table.passwordHash,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get pinHash => $composableBuilder(
+      column: $table.pinHash, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get role => $composableBuilder(
+      column: $table.role, builder: (column) => ColumnOrderings(column));
 }
 
 class $$UsersTableAnnotationComposer
@@ -1101,6 +1249,15 @@ class $$UsersTableAnnotationComposer
 
   GeneratedColumn<String> get username =>
       $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get passwordHash => $composableBuilder(
+      column: $table.passwordHash, builder: (column) => column);
+
+  GeneratedColumn<String> get pinHash =>
+      $composableBuilder(column: $table.pinHash, builder: (column) => column);
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
 
   Expression<T> measurementsRefs<T extends Object>(
       Expression<T> Function($$MeasurementsTableAnnotationComposer a) f) {
@@ -1149,21 +1306,33 @@ class $$UsersTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
             Value<String> username = const Value.absent(),
+            Value<String> passwordHash = const Value.absent(),
+            Value<String> pinHash = const Value.absent(),
+            Value<String> role = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               UsersCompanion(
             id: id,
             username: username,
+            passwordHash: passwordHash,
+            pinHash: pinHash,
+            role: role,
             rowid: rowid,
           ),
           createCompanionCallback: ({
             required String id,
             required String username,
+            required String passwordHash,
+            required String pinHash,
+            Value<String> role = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               UsersCompanion.insert(
             id: id,
             username: username,
+            passwordHash: passwordHash,
+            pinHash: pinHash,
+            role: role,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

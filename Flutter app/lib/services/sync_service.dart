@@ -13,7 +13,30 @@ class SyncService extends ChangeNotifier {
 
   SyncService(this._database);
 
-  Future<String?> fetchAttractions() async {
+  Future<String> syncAll() async {
+    if (_isSyncing) return "Synchronizacja już trwa...";
+    _isSyncing = true;
+    notifyListeners();
+
+    try {
+      final resultMeasurements = await syncMeasurements(notify: false);
+      await syncAttractionsCoordinates();
+      await syncNewAttractions();
+      await syncUsers();
+      final resultAttractions = await fetchAttractions(notify: false);
+
+      final message = [resultMeasurements, resultAttractions]
+          .where((e) => e != null)
+          .toSet()
+          .join('\n');
+      return message.isEmpty ? "Zsynchronizowano." : message;
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> fetchAttractions({bool notify = true}) async {
     final stopwatch = Stopwatch()..start();
     try {
       final response = await _apiClient.get('/attractions');
@@ -47,14 +70,16 @@ class SyncService extends ChangeNotifier {
         return 'Błąd HTTP ${response.statusCode} (${httpTime}ms)';
       }
     } catch (e) {
-      return 'Błąd połączenia: $e';
+      return 'Brak połączenia z siecią, spróbuj ponownie gdy odzyskasz połączenie';
     }
   }
 
-  Future<String?> syncMeasurements() async {
-    if (_isSyncing) return null;
-    _isSyncing = true;
-    notifyListeners();
+  Future<String?> syncMeasurements({bool notify = true}) async {
+    if (_isSyncing && notify) return null; // Zabezpieczenie przed podwójnym kliknięciem, jeśli notify = true
+    if (notify) {
+      _isSyncing = true;
+      notifyListeners();
+    }
 
     final stopwatch = Stopwatch()..start();
     try {
@@ -94,20 +119,23 @@ class SyncService extends ChangeNotifier {
           await (_database.update(_database.measurements)..where((t) => t.id.equals(m.id)))
               .write(const MeasurementsCompanion(syncStatus: drift.Value('FAILED')));
         }
-        return "Błąd wysyłania (HTTP ${response.statusCode}, ${httpTime}ms)";
+        print('HTTP ${response.statusCode} BODY: ${response.body}');
+        return "Błąd wysyłania (HTTP ${response.statusCode}, ${httpTime}ms) - ${response.body}";
       }
     } catch (e) {
-      return 'Błąd synchronizacji: $e';
+      return 'Brak połączenia z siecią, spróbuj ponownie gdy odzyskasz połączenie';
     } finally {
-      _isSyncing = false;
-      notifyListeners();
+      if (notify) {
+        _isSyncing = false;
+        notifyListeners();
+      }
     }
   }
 
   Future<void> syncAttractionsCoordinates() async {
     try {
       final pendingAttractions = await (_database.select(_database.attractions)
-            ..where((t) => t.syncStatus.equals('PENDING')))
+            ..where((t) => t.syncStatus.equals('PENDING_UPDATE')))
           .get();
 
       if (pendingAttractions.isEmpty) return;
@@ -117,6 +145,9 @@ class SyncService extends ChangeNotifier {
           'id': a.id,
           'latitude': a.latitude,
           'longitude': a.longitude,
+          'name': a.name,
+          'radius': a.radius,
+          'isActive': a.isActive,
         }).toList()
       };
 
@@ -130,6 +161,61 @@ class SyncService extends ChangeNotifier {
       }
     } catch (e) {
       print('Sync attractions error: $e');
+    }
+  }
+
+  Future<void> syncNewAttractions() async {
+    try {
+      final newAttractions = await (_database.select(_database.attractions)
+            ..where((t) => t.syncStatus.equals('PENDING_CREATE')))
+          .get();
+
+      if (newAttractions.isEmpty) return;
+
+      for (var a in newAttractions) {
+        final payload = {
+          'name': a.name,
+          'latitude': a.latitude,
+          'longitude': a.longitude,
+          'radius': a.radius,
+        };
+        final response = await _apiClient.post('/admin/attractions', payload);
+        
+        if (response.statusCode == 200) {
+          // Usuwamy tymczasowy lokalny rekord, zaraz i tak zostanie pobrany z bazy z nowym UUID z serwera
+          await (_database.delete(_database.attractions)..where((t) => t.id.equals(a.id))).go();
+        }
+      }
+    } catch (e) {
+      print('Sync new attractions error: $e');
+    }
+  }
+
+  Future<void> syncUsers() async {
+    try {
+      final response = await _apiClient.get('/sync/users');
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          await _database.transaction(() async {
+            for (var item in decoded) {
+              await _database.into(_database.users).insertOnConflictUpdate(
+                UsersCompanion(
+                  id: drift.Value(item['id'] ?? ''),
+                  username: drift.Value(item['username'] ?? ''),
+                  passwordHash: drift.Value(item['passwordHash'] ?? ''),
+                  pinHash: drift.Value(item['pinHash'] ?? ''),
+                  role: drift.Value(item['role'] ?? 'WORKER'),
+                )
+              );
+            }
+          });
+        }
+      } else {
+        print('Sync users failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Sync users error: $e');
     }
   }
 }

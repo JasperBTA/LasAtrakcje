@@ -4,7 +4,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
   // Adres produkcyjny VM w lesie (zmień na 10.0.2.2 dla emulatora)
-  static const String baseUrl = 'http://10.0.2.2:8080/api';
+  // Adres produkcyjny serwera RDP (wcześniej było 10.0.2.2)
+  static const String baseUrl = 'http://192.168.151.13:8080/api';
   final _storage = const FlutterSecureStorage();
 
   Future<Map<String, String>> _getHeaders() async {
@@ -21,7 +22,7 @@ class ApiClient {
       Uri.parse('$baseUrl$endpoint'),
       headers: headers,
       body: jsonEncode(body),
-    );
+    ).timeout(const Duration(seconds: 5));
   }
 
   Future<http.Response> get(String endpoint) async {
@@ -29,7 +30,7 @@ class ApiClient {
     return http.get(
       Uri.parse('$baseUrl$endpoint'),
       headers: headers,
-    );
+    ).timeout(const Duration(seconds: 5));
   }
 
   Future<http.Response> put(String endpoint, Map<String, dynamic> body) async {
@@ -38,7 +39,7 @@ class ApiClient {
       Uri.parse('$baseUrl$endpoint'),
       headers: headers,
       body: jsonEncode(body),
-    );
+    ).timeout(const Duration(seconds: 5));
   }
 
   Future<http.Response> delete(String endpoint) async {
@@ -46,6 +47,6 @@ class ApiClient {
     return http.delete(
       Uri.parse('$baseUrl$endpoint'),
       headers: headers,
-    );
+    ).timeout(const Duration(seconds: 5));
   }
 }

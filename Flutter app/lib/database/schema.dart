@@ -8,6 +8,9 @@ import 'package:drift/drift.dart';
 class Users extends Table {
   TextColumn get id => text()(); // UUID z serwera
   TextColumn get username => text()();
+  TextColumn get passwordHash => text()();
+  TextColumn get pinHash => text()();
+  TextColumn get role => text().withDefault(const Constant('WORKER'))();
   
   @override
   Set<Column> get primaryKey => {id};
