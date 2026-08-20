@@ -26,6 +26,7 @@ public class TimeAppApplication {
                 User testUser = new User();
                 testUser.setUsername("test");
                 testUser.setPasswordHash(passwordEncoder.encode("test"));
+                testUser.setPinHash(passwordEncoder.encode("1234"));
                 testUser.setCreatedAt(java.time.OffsetDateTime.now());
                 testUser.setRole("WORKER");
                 userRepository.save(testUser);
@@ -33,6 +34,7 @@ public class TimeAppApplication {
                 User adminUser = new User();
                 adminUser.setUsername("admin");
                 adminUser.setPasswordHash(passwordEncoder.encode("admin"));
+                adminUser.setPinHash(passwordEncoder.encode("0000"));
                 adminUser.setCreatedAt(java.time.OffsetDateTime.now());
                 adminUser.setRole("ADMIN");
                 userRepository.save(adminUser);

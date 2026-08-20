@@ -2,6 +2,7 @@ package com.las.timeapp.controller;
 
 import com.las.timeapp.dto.AuthRequest;
 import com.las.timeapp.dto.AuthResponse;
+import com.las.timeapp.dto.PinAuthRequest;
 import com.las.timeapp.model.User;
 import com.las.timeapp.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import com.las.timeapp.security.JwtUtil;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -38,6 +40,24 @@ public class AuthController {
             if (passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
                 String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
                 return ResponseEntity.ok(new AuthResponse(token, user.getId(), user.getUsername(), user.getRole()));
+            }
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @PostMapping("/login-pin")
+    public ResponseEntity<AuthResponse> loginPin(@RequestBody PinAuthRequest request) {
+        if (request.getPin() == null || request.getPin().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        List<User> allUsers = userRepository.findAll();
+        for (User user : allUsers) {
+            if (user.getPinHash() != null && !user.getPinHash().isEmpty()) {
+                if (passwordEncoder.matches(request.getPin(), user.getPinHash())) {
+                    String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
+                    return ResponseEntity.ok(new AuthResponse(token, user.getId(), user.getUsername(), user.getRole()));
+                }
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

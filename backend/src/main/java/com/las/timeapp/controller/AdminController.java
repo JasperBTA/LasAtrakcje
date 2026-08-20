@@ -2,6 +2,7 @@ package com.las.timeapp.controller;
 
 import com.las.timeapp.dto.AttractionCreateRequest;
 import com.las.timeapp.dto.UserCreateRequest;
+import com.las.timeapp.dto.UserUpdateRequest;
 import com.las.timeapp.model.Attraction;
 import com.las.timeapp.model.User;
 import com.las.timeapp.repository.AttractionRepository;
@@ -84,6 +85,26 @@ public class AdminController {
         }
         
         userRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("status", "success"));
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable UUID id, @RequestBody UserUpdateRequest request) {
+        Optional<User> opt = userRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        User user = opt.get();
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
+        }
+        if (request.getPin() != null && !request.getPin().trim().isEmpty()) {
+            user.setPinHash(passwordEncoder.encode(request.getPin().trim()));
+        }
+        if (request.getRole() != null && !request.getRole().trim().isEmpty()) {
+            user.setRole(request.getRole().trim().toUpperCase());
+        }
+        userRepository.save(user);
         return ResponseEntity.ok(Map.of("status", "success"));
     }
 
