@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -13,9 +14,12 @@ import java.util.UUID;
 @Component
 public class JwtUtil {
 
-    // For Stage 3 MVP, using a hardcoded secure key. In prod, use properties.
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final Key key;
     private final long expirationTime = 86400000L; // 24 hours
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     public String generateToken(UUID userId, String username, String role) {
         return Jwts.builder()
