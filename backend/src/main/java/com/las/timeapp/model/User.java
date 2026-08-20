@@ -23,6 +23,9 @@ public class User {
     @Column(nullable = false)
     private String role = "WORKER";
 
+    @Column(name = "pin_hash", nullable = true)
+    private String pinHash;
+
     // Getters and Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -34,4 +37,6 @@ public class User {
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    public String getPinHash() { return pinHash; }
+    public void setPinHash(String pinHash) { this.pinHash = pinHash; }
 }

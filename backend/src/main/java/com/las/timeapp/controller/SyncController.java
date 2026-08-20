@@ -12,9 +12,11 @@ import java.util.Map;
 public class SyncController {
 
     private final SyncService syncService;
+    private final com.las.timeapp.repository.UserRepository userRepository;
 
-    public SyncController(SyncService syncService) {
+    public SyncController(SyncService syncService, com.las.timeapp.repository.UserRepository userRepository) {
         this.syncService = syncService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/measurements")
@@ -28,5 +30,20 @@ public class SyncController {
             "status", "SUCCESS",
             "syncedCount", syncedCount
         ));
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<?> syncUsers() {
+        // Zwracamy wszystkich użytkowników, aby aplikacja mogła sobie stworzyć lustro do logowania offline.
+        java.util.List<Map<String, Object>> users = userRepository.findAll().stream()
+            .map(u -> Map.<String, Object>of(
+                "id", u.getId(),
+                "username", u.getUsername(),
+                "passwordHash", u.getPasswordHash(),
+                "pinHash", u.getPinHash() != null ? u.getPinHash() : "",
+                "role", u.getRole()
+            ))
+            .toList();
+        return ResponseEntity.ok(users);
     }
 }

@@ -41,6 +41,11 @@ public class AdminController {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        
+        if (request.getPin() != null && !request.getPin().trim().isEmpty()) {
+            user.setPinHash(passwordEncoder.encode(request.getPin().trim()));
+        }
+
         user.setRole(request.getRole() != null ? request.getRole().toUpperCase() : "WORKER");
         user.setCreatedAt(OffsetDateTime.now());
 

@@ -43,8 +43,17 @@ public class AttractionController {
                         if (dto.get("longitude") != null) {
                             attr.setLongitude(((Number) dto.get("longitude")).doubleValue());
                         }
+                        if (dto.get("name") != null) {
+                            attr.setName((String) dto.get("name"));
+                        }
+                        if (dto.get("radius") != null) {
+                            attr.setRadius(((Number) dto.get("radius")).doubleValue());
+                        }
+                        if (dto.get("isActive") != null) {
+                            attr.setIsActive((Boolean) dto.get("isActive"));
+                        }
                         attractionRepository.save(attr);
-                        System.out.println("Zaktualizowano GPS (offline sync) dla: " + attr.getName());
+                        System.out.println("Zaktualizowano dane (offline sync) dla: " + attr.getName());
                     });
                 } catch (Exception e) {
                     System.out.println("Błąd aktualizacji GPS: " + e.getMessage());
