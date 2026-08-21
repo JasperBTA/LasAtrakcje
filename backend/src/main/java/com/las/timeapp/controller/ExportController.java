@@ -101,4 +101,10 @@ public class ExportController {
             return map;
         }).collect(java.util.stream.Collectors.toList()));
     }
+
+    // 5. Automatyczne przekierowanie na mapę
+    @GetMapping("/")
+    public void redirect(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        response.sendRedirect("/mapa.html");
+    }
 }
