@@ -90,13 +90,15 @@ public class ExportController {
     // 4. Endpoint dla Mapy HTML (Dashboard serwera)
     @GetMapping("/attractions/json")
     public ResponseEntity<List<Map<String, Object>>> getAttractionsJson() {
-        return ResponseEntity.ok(attractionRepository.findAll().stream().map(attr -> Map.of(
-            "id", attr.getId(),
-            "name", attr.getName(),
-            "latitude", attr.getLatitude(),
-            "longitude", attr.getLongitude(),
-            "radius", attr.getRadius(),
-            "isActive", attr.getIsActive()
-        )).collect(java.util.stream.Collectors.toList()));
+        return ResponseEntity.ok(attractionRepository.findAll().stream().map(attr -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", attr.getId());
+            map.put("name", attr.getName());
+            map.put("latitude", attr.getLatitude());
+            map.put("longitude", attr.getLongitude());
+            map.put("radius", attr.getRadius());
+            map.put("isActive", attr.getIsActive());
+            return map;
+        }).collect(java.util.stream.Collectors.toList()));
     }
 }
