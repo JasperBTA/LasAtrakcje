@@ -79,4 +79,11 @@ public class ExportController {
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(csvBuilder.toString());
     }
+
+    // 3. Endpoint administracyjny: Czyszczenie bazy pomiarów
+    @org.springframework.web.bind.annotation.DeleteMapping("/measurements/clear")
+    public ResponseEntity<Map<String, String>> clearMeasurements() {
+        measurementRepository.deleteAll();
+        return ResponseEntity.ok(Map.of("message", "Wszystkie pomiary zostały pomyślnie usunięte z bazy danych."));
+    }
 }
