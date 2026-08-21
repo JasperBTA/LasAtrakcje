@@ -86,4 +86,17 @@ public class ExportController {
         measurementRepository.deleteAll();
         return ResponseEntity.ok(Map.of("message", "Wszystkie pomiary zostały pomyślnie usunięte z bazy danych."));
     }
+
+    // 4. Endpoint dla Mapy HTML (Dashboard serwera)
+    @GetMapping("/attractions/json")
+    public ResponseEntity<List<Map<String, Object>>> getAttractionsJson() {
+        return ResponseEntity.ok(attractionRepository.findAll().stream().map(attr -> Map.of(
+            "id", attr.getId(),
+            "name", attr.getName(),
+            "latitude", attr.getLatitude(),
+            "longitude", attr.getLongitude(),
+            "radius", attr.getRadius(),
+            "isActive", attr.getIsActive()
+        )).collect(java.util.stream.Collectors.toList()));
+    }
 }
