@@ -47,7 +47,12 @@ public class SurveyController {
 
                 Object createdAtObj = data.get("createdAt");
                 if (createdAtObj != null) {
-                    survey.setCreatedAt(OffsetDateTime.parse(createdAtObj.toString()));
+                    String dateStr = createdAtObj.toString();
+                    try {
+                        survey.setCreatedAt(OffsetDateTime.parse(dateStr));
+                    } catch (java.time.format.DateTimeParseException e) {
+                        survey.setCreatedAt(java.time.LocalDateTime.parse(dateStr).atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime());
+                    }
                 } else {
                     survey.setCreatedAt(OffsetDateTime.now());
                 }
