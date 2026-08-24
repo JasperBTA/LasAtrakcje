@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Lasu - Geotagi</title>
     
+    <!-- Skrypt autoryzacji i Navbar -->
+    <script src="auth.js"></script>
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
@@ -35,7 +38,14 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             display: flex;
+            flex-direction: column;
             height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-content {
+            display: flex;
+            flex-grow: 1;
             overflow: hidden;
         }
 
@@ -176,20 +186,22 @@
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="header">
-            <h1>Geotagi Lasu</h1>
-            <p>Interaktywny podgląd stref geofence</p>
-        </div>
-        <div class="table-container" id="attractionsList">
-            <!-- Tutaj zostaną wygenerowane karty przez JavaScript -->
-            <div style="text-align: center; padding: 40px; color: #94a3b8;">
-                Ładowanie danych z serwera...
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="header">
+                <h1>Geotagi Lasu</h1>
+                <p>Interaktywny podgląd stref geofence</p>
+            </div>
+            <div class="table-container" id="attractionsList">
+                <!-- Tutaj zostaną wygenerowane karty przez JavaScript -->
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    Ładowanie danych z serwera...
+                </div>
             </div>
         </div>
-    </div>
 
-    <div id="map"></div>
+        <div id="map"></div>
+    </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -211,7 +223,9 @@
 
         let mapMarkers = [];
 
-        // Pobieranie danych z naszego nowego endpointu
+        let isFirstLoad = true;
+
+        // Pobieranie danych z naszego endpointu
         async function fetchAttractions() {
             try {
                 const response = await fetch('/api/export/attractions/json');
@@ -221,16 +235,21 @@
                 renderDashboard(attractions);
             } catch (error) {
                 console.error('Błąd:', error);
-                document.getElementById('attractionsList').innerHTML = 
-                    `<div style="text-align: center; padding: 40px; color: #ef4444;">
-                        Błąd połączenia z bazą danych.<br>Upewnij się, że serwer działa prawidłowo.
-                    </div>`;
+                if (isFirstLoad) {
+                    document.getElementById('attractionsList').innerHTML = 
+                        `<div style="text-align: center; padding: 40px; color: #ef4444;">
+                            Błąd połączenia z bazą danych.<br>Upewnij się, że serwer działa prawidłowo.
+                        </div>`;
+                }
             }
         }
 
         function renderDashboard(attractions) {
             const listContainer = document.getElementById('attractionsList');
-            listContainer.innerHTML = ''; // Czyszczenie
+            
+            // Zachowujemy pozycję scrolla w tabeli
+            const scrollPos = listContainer.scrollTop;
+            listContainer.innerHTML = ''; 
 
             if (attractions.length === 0) {
                 listContainer.innerHTML = `<div style="text-align: center; padding: 40px; color: #94a3b8;">Brak atrakcji w bazie.</div>`;
@@ -238,6 +257,10 @@
             }
 
             const bounds = L.latLngBounds();
+
+            // Czyszczenie starych markerów z mapy
+            mapMarkers.forEach(marker => map.removeLayer(marker));
+            mapMarkers = [];
 
             attractions.forEach(attr => {
                 // 1. Dodawanie okręgów na mapę
@@ -286,15 +309,22 @@
 
                 listContainer.appendChild(card);
             });
+            
+            // Przywracamy scroll
+            listContainer.scrollTop = scrollPos;
 
-            // Dopasuj widok mapy tak, aby objąć wszystkie atrakcje
-            if (mapMarkers.length > 0) {
+            // Dopasuj widok mapy tylko za pierwszym załadowaniem, żeby nie psuć użytkownikowi przeglądania
+            if (isFirstLoad && mapMarkers.length > 0) {
                 map.fitBounds(bounds, { padding: [50, 50] });
+                isFirstLoad = false;
             }
         }
 
-        // Uruchom pobieranie po załadowaniu strony
+        // Uruchom pierwsze pobieranie
         fetchAttractions();
+        
+        // Pętla czasu rzeczywistego (odświeża dane z bazy co 3 sekundy)
+        setInterval(fetchAttractions, 3000);
 
     </script>
 </body>

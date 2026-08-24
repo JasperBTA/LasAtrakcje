@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomiary - Las Odkrywców</title>
+    
+    <script src="auth.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        table.dataTable { color: #ffffff; }
+        table.dataTable thead th, table.dataTable thead td { border-bottom: 1px solid #444; }
+        table.dataTable.no-footer { border-bottom: 1px solid #444; }
+        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info { color: #ccc; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { color: #ccc !important; }
+        
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-delete { background-color: #F44336; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 style="color: #ff9800; text-align: center;">Zarejestrowane Pomiary Czasu</h1>
+
+        <div style="text-align: right; margin-bottom: 20px;">
+            <a href="/api/export/measurements/csv" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                ⬇️ Pobierz plik CSV (Do Google Sheets)
+            </a>
+        </div>
+
+        <table id="measurementsTable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Start</th>
+                    <th>Zakończenie</th>
+                    <th>Pracownik (UUID)</th>
+                    <th>Atrakcja (UUID)</th>
+                    <th>Czas (sekundy)</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+    
+    <script>
+        let table;
+
+        $(document).ready(function() {
+            table = $('#measurementsTable').DataTable({
+                ajax: {
+                    url: '/api/export/measurements/json', // Otwarty endpoint eksportowy odczytuje listę
+                    dataSrc: ''
+                },
+                columns: [
+                    { 
+                        data: 'startTime',
+                        render: function(data) { return data ? new Date(data).toLocaleString('pl-PL') : 'Brak'; }
+                    },
+                    { 
+                        data: 'stopTime',
+                        render: function(data) { return data ? new Date(data).toLocaleString('pl-PL') : 'Trwa...'; }
+                    },
+                    { data: 'operatorId' },
+                    { data: 'attractionId' },
+                    { 
+                        data: 'totalDurationSeconds',
+                        render: function(data) { return data ? data + ' s' : '-'; }
+                    },
+                    {
+                        data: null,
+                        orderable: false,
+                        render: function(data, type, row) {
+                            return `<button class="btn-delete" onclick="deleteMeasurement('${row.id}')">🗑️ Usuń śmieć</button>`;
+                        }
+                    }
+                ],
+                order: [[0, 'desc']],
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pl.json' }
+            });
+        });
+
+        async function deleteMeasurement(id) {
+            if(confirm("Usunąć ten pomiar z bazy na stałe?")) {
+                try {
+                    const response = await fetch(`/api/admin/measurements/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        table.ajax.reload(null, false);
+                    } else {
+                        alert("Błąd podczas usuwania. Upewnij się, że jesteś zalogowany jako admin.");
+                    }
+                } catch (err) {
+                    alert("Błąd połączenia.");
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.las.timeapp.repository.SurveyRepository;
 
 @RestController
 @RequestMapping("/api/export")
@@ -24,13 +25,16 @@ public class ExportController {
     private final MeasurementRepository measurementRepository;
     private final UserRepository userRepository;
     private final AttractionRepository attractionRepository;
+    private final SurveyRepository surveyRepository;
 
     public ExportController(MeasurementRepository measurementRepository,
                             UserRepository userRepository,
-                            AttractionRepository attractionRepository) {
+                            AttractionRepository attractionRepository,
+                            SurveyRepository surveyRepository) {
         this.measurementRepository = measurementRepository;
         this.userRepository = userRepository;
         this.attractionRepository = attractionRepository;
+        this.surveyRepository = surveyRepository;
     }
 
     // 1. Zwykły Endpoint JSON (Do tworzenia wykresów w aplikacjach webowych i bibliotek JS)
@@ -102,7 +106,31 @@ public class ExportController {
         }).collect(java.util.stream.Collectors.toList()));
     }
 
-    // 5. Automatyczne przekierowanie na mapę
+    // 5. Endpoint dla Ankiet (Dashboard serwera)
+    @GetMapping("/surveys/json")
+    public ResponseEntity<List<Map<String, Object>>> getSurveysJson() {
+        return ResponseEntity.ok(surveyRepository.findAll().stream().map(s -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", s.getId());
+            
+            String operatorName = userRepository.findById(java.util.UUID.fromString(s.getOperatorId().toString()))
+                .map(User::getUsername)
+                .orElse("Nieznany");
+            
+            map.put("operatorName", operatorName);
+            map.put("createdAt", s.getCreatedAt());
+            map.put("rating", s.getRating());
+            map.put("strengths", s.getStrengths());
+            map.put("improvements", s.getImprovements());
+            map.put("recommendRating", s.getRecommendRating());
+            map.put("source", s.getSource());
+            map.put("sourceOther", s.getSourceOther());
+            map.put("notes", s.getNotes());
+            return map;
+        }).collect(Collectors.toList()));
+    }
+
+    // 6. Automatyczne przekierowanie na mapę
     @GetMapping("/")
     public void redirect(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
         response.sendRedirect("/mapa.html");

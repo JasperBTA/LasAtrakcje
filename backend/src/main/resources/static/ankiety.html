@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Lasu - Ankiety</title>
+    
+    <!-- Skrypt autoryzacji i Navbar -->
+    <script src="auth.js"></script>
+
+    <!-- jQuery and DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #ff9800;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        table.dataTable {
+            color: #ffffff;
+        }
+        table.dataTable thead th, table.dataTable thead td {
+            border-bottom: 1px solid #444;
+        }
+        table.dataTable.no-footer {
+            border-bottom: 1px solid #444;
+        }
+        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
+            color: #ccc;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: #ccc !important;
+        }
+        /* Custom coloring for ratings */
+        .rating-good { color: #4CAF50; font-weight: bold; }
+        .rating-ok { color: #FFC107; font-weight: bold; }
+        .rating-bad { color: #F44336; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Wyniki Ankiet (Las Odkrywców)</h1>
+        <table id="surveysTable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Ankieter</th>
+                    <th>Ocena (1-5)</th>
+                    <th>Polecenie (1-10)</th>
+                    <th>Mocne Strony</th>
+                    <th>Do Poprawy</th>
+                    <th>Źródło</th>
+                    <th>Uwagi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data populated by DataTables via AJAX -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- jQuery and DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $('#surveysTable').DataTable({
+                ajax: {
+                    url: '/api/export/surveys/json',
+                    dataSrc: ''
+                },
+                columns: [
+                    { 
+                        data: 'createdAt',
+                        render: function(data) {
+                            if(!data) return '';
+                            return new Date(data).toLocaleString('pl-PL');
+                        }
+                    },
+                    { data: 'operatorName' },
+                    { 
+                        data: 'rating',
+                        render: function(data) {
+                            if (data >= 4) return '<span class="rating-good">' + data + '</span>';
+                            if (data == 3) return '<span class="rating-ok">' + data + '</span>';
+                            return '<span class="rating-bad">' + data + '</span>';
+                        }
+                    },
+                    { 
+                        data: 'recommendRating',
+                        render: function(data) {
+                            if (data >= 8) return '<span class="rating-good">' + data + '</span>';
+                            if (data >= 5) return '<span class="rating-ok">' + data + '</span>';
+                            return '<span class="rating-bad">' + data + '</span>';
+                        }
+                    },
+                    { data: 'strengths' },
+                    { data: 'improvements' },
+                    { 
+                        data: 'source',
+                        render: function(data, type, row) {
+                            if (data === 'inne' && row.sourceOther) {
+                                return data + ' (' + row.sourceOther + ')';
+                            }
+                            return data || '';
+                        }
+                    },
+                    { data: 'notes' }
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pl.json'
+                },
+                order: [[0, 'desc']], // Sort by date descending by default
+                pageLength: 25
+            });
+        });
+    </script>
+</body>
+</html>

@@ -26,7 +26,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/login", "/api/auth/login-pin").permitAll()
                 .requestMatchers("/api/export/**").permitAll()
-                .requestMatchers("/mapa.html").permitAll()
+                .requestMatchers("/*.html", "/*.js", "/*.css").permitAll()
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

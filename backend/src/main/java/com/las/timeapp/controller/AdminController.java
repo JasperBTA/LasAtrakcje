@@ -7,6 +7,7 @@ import com.las.timeapp.model.Attraction;
 import com.las.timeapp.model.User;
 import com.las.timeapp.repository.AttractionRepository;
 import com.las.timeapp.repository.UserRepository;
+import com.las.timeapp.repository.MeasurementRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -24,11 +25,16 @@ public class AdminController {
 
     private final UserRepository userRepository;
     private final AttractionRepository attractionRepository;
+    private final MeasurementRepository measurementRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AdminController(UserRepository userRepository, AttractionRepository attractionRepository, PasswordEncoder passwordEncoder) {
+    public AdminController(UserRepository userRepository, 
+                           AttractionRepository attractionRepository, 
+                           MeasurementRepository measurementRepository,
+                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.attractionRepository = attractionRepository;
+        this.measurementRepository = measurementRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -123,6 +129,23 @@ public class AdminController {
         if (request.getLongitude() != null) attraction.setLongitude(request.getLongitude());
 
         attractionRepository.save(attraction);
+        return ResponseEntity.ok(Map.of("status", "success"));
+    }
+    @DeleteMapping("/attractions/{id}")
+    public ResponseEntity<?> deleteAttraction(@PathVariable UUID id) {
+        if (!attractionRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        attractionRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("status", "success"));
+    }
+
+    @DeleteMapping("/measurements/{id}")
+    public ResponseEntity<?> deleteMeasurement(@PathVariable UUID id) {
+        if (!measurementRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        measurementRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("status", "success"));
     }
 }

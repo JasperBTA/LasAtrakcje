@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zarządzanie Strefami - Las Odkrywców</title>
+    
+    <!-- Skrypt autoryzacji (musi być pierwszy, by dodać navbar i sprawdzić token) -->
+    <script src="auth.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        table.dataTable { color: #ffffff; }
+        table.dataTable thead th, table.dataTable thead td { border-bottom: 1px solid #444; }
+        table.dataTable.no-footer { border-bottom: 1px solid #444; }
+        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info { color: #ccc; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { color: #ccc !important; }
+        
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-edit { background-color: #2196F3; color: white; }
+        .btn-delete { background-color: #F44336; color: white; margin-left: 5px; }
+        .btn-add { background-color: #4CAF50; color: white; padding: 10px 20px; font-size: 16px; margin-bottom: 20px; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        .modal-content {
+            background-color: #2c2c2c; margin: 10% auto; padding: 20px; border-radius: 10px;
+            width: 400px; color: white;
+        }
+        .modal input[type="text"], .modal input[type="number"] {
+            width: 90%; padding: 10px; margin: 10px 0; background: #111; color: white; border: 1px solid #555;
+        }
+        .modal-actions { text-align: right; margin-top: 15px; }
+        .modal-actions button { margin-left: 10px; padding: 10px 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 style="color: #ff9800; text-align: center;">Zarządzanie Strefami (Atrakcje)</h1>
+        
+        <button class="btn-add" onclick="openAddModal()">+ Dodaj Nową Strefę</button>
+
+        <table id="attractionsTable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Nazwa</th>
+                    <th>Promień (m)</th>
+                    <th>Status</th>
+                    <th>Długość (Lng)</th>
+                    <th>Szerokość (Lat)</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Modal Edycji/Dodawania -->
+    <div id="attractionModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edytuj Strefę</h2>
+            <input type="hidden" id="attrId">
+            <input type="text" id="attrName" placeholder="Nazwa strefy (np. Stary Dąb)">
+            <input type="number" id="attrRadius" placeholder="Promień wykrywania w metrach" step="1">
+            
+            <label style="display:block; margin:10px 0;">
+                <input type="checkbox" id="attrActive"> Strefa Aktywna (monitorowana)
+            </label>
+
+            <div class="modal-actions">
+                <button onclick="closeModal()" style="background-color: #555; color:white;">Anuluj</button>
+                <button onclick="saveAttraction()" style="background-color: #4CAF50; color:white;">Zapisz</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+    
+    <script>
+        let table;
+
+        $(document).ready(function() {
+            table = $('#attractionsTable').DataTable({
+                ajax: {
+                    url: '/api/export/attractions/json',
+                    dataSrc: ''
+                },
+                columns: [
+                    { data: 'name' },
+                    { data: 'radius' },
+                    { 
+                        data: 'isActive',
+                        render: function(data) {
+                            return data ? '<span style="color:#4CAF50">Aktywna</span>' : '<span style="color:#F44336">Wyłączona</span>';
+                        }
+                    },
+                    { data: 'longitude' },
+                    { data: 'latitude' },
+                    {
+                        data: null,
+                        orderable: false,
+                        render: function(data, type, row) {
+                            return `<button class="btn-edit" onclick="openEditModal('${row.id}', '${row.name.replace(/'/g, "\\'")}', ${row.radius}, ${row.isActive})">Edytuj</button>
+                                    <button class="btn-delete" onclick="deleteAttraction('${row.id}')">Usuń</button>`;
+                        }
+                    }
+                ],
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pl.json' }
+            });
+        });
+
+        function openAddModal() {
+            document.getElementById('modalTitle').innerText = 'Dodaj Nową Strefę';
+            document.getElementById('attrId').value = '';
+            document.getElementById('attrName').value = '';
+            document.getElementById('attrRadius').value = '10';
+            document.getElementById('attrActive').checked = true;
+            document.getElementById('attractionModal').style.display = 'block';
+        }
+
+        function openEditModal(id, name, radius, isActive) {
+            document.getElementById('modalTitle').innerText = 'Edytuj Strefę';
+            document.getElementById('attrId').value = id;
+            document.getElementById('attrName').value = name;
+            document.getElementById('attrRadius').value = radius;
+            document.getElementById('attrActive').checked = isActive;
+            document.getElementById('attractionModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('attractionModal').style.display = 'none';
+        }
+
+        async function saveAttraction() {
+            const id = document.getElementById('attrId').value;
+            const name = document.getElementById('attrName').value;
+            const radius = document.getElementById('attrRadius').value;
+            const isActive = document.getElementById('attrActive').checked;
+
+            if(!name || !radius) {
+                alert("Wypełnij nazwę i promień!");
+                return;
+            }
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/admin/attractions/${id}` : `/api/admin/attractions`;
+            
+            // Jesli nowa, z powodu braku GPS z przeglądarki ustawiamy 0,0. Najlepiej edytować lokalizację w aplikacji.
+            const payload = id ? { name, radius, isActive } : { name, radius, isActive, latitude: 0, longitude: 0 };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    closeModal();
+                    table.ajax.reload(null, false);
+                    if (!id) alert("Dodano! Pamiętaj aby w aplikacji wejść do Panelu -> Atrakcje i zapisać pozycję GPS dla nowej strefy.");
+                } else {
+                    alert("Błąd podczas zapisywania!");
+                }
+            } catch (err) {
+                alert("Błąd połączenia.");
+            }
+        }
+
+        async function deleteAttraction(id) {
+            if(confirm("Czy na pewno chcesz usunąć tę strefę? (Usunięcie może zepsuć powiązane pomiary).")) {
+                try {
+                    const response = await fetch(`/api/admin/attractions/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        table.ajax.reload(null, false);
+                    } else {
+                        alert("Błąd podczas usuwania!");
+                    }
+                } catch (err) {
+                    alert("Błąd połączenia.");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
