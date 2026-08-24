@@ -42,7 +42,7 @@ public class SurveyController {
                 
                 Object operatorIdObj = data.get("operatorId");
                 if (operatorIdObj != null) {
-                    survey.setOperatorId(Long.valueOf(operatorIdObj.toString()));
+                    survey.setOperatorId(java.util.UUID.fromString(operatorIdObj.toString()));
                 }
 
                 Object createdAtObj = data.get("createdAt");

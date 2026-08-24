@@ -113,7 +113,7 @@ public class ExportController {
             Map<String, Object> map = new java.util.HashMap<>();
             map.put("id", s.getId());
             
-            String operatorName = userRepository.findById(java.util.UUID.fromString(s.getOperatorId().toString()))
+            String operatorName = userRepository.findById(s.getOperatorId())
                 .map(User::getUsername)
                 .orElse("Nieznany");
             
@@ -134,7 +134,7 @@ public class ExportController {
     public ResponseEntity<String> getSurveysCsv() {
         StringBuilder csv = new StringBuilder("ID,Pracownik,Data,Ocena Ogólna,Mocne Strony,Do Poprawy,Skłonność do polecenia,Źródło,Inne Źródło,Uwagi\n");
         surveyRepository.findAll().forEach(s -> {
-            String operatorName = userRepository.findById(java.util.UUID.fromString(s.getOperatorId().toString()))
+            String operatorName = userRepository.findById(s.getOperatorId())
                 .map(User::getUsername).orElse("Nieznany");
                 
             csv.append(String.format("%s,%s,%s,%d,\"%s\",\"%s\",%d,\"%s\",\"%s\",\"%s\"\n",

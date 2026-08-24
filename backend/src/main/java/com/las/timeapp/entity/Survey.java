@@ -16,7 +16,7 @@ public class Survey {
     private String id;
 
     @Column(name = "operator_id")
-    private Long operatorId;
+    private UUID operatorId;
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
@@ -51,8 +51,8 @@ public class Survey {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    public Long getOperatorId() { return operatorId; }
-    public void setOperatorId(Long operatorId) { this.operatorId = operatorId; }
+    public UUID getOperatorId() { return operatorId; }
+    public void setOperatorId(UUID operatorId) { this.operatorId = operatorId; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
