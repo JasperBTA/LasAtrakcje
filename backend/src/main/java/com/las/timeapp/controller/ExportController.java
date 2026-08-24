@@ -130,6 +130,34 @@ public class ExportController {
         }).collect(Collectors.toList()));
     }
 
+    @GetMapping("/surveys/csv")
+    public ResponseEntity<String> getSurveysCsv() {
+        StringBuilder csv = new StringBuilder("ID,Pracownik,Data,Ocena Ogólna,Mocne Strony,Do Poprawy,Skłonność do polecenia,Źródło,Inne Źródło,Uwagi\n");
+        surveyRepository.findAll().forEach(s -> {
+            String operatorName = userRepository.findById(java.util.UUID.fromString(s.getOperatorId().toString()))
+                .map(User::getUsername).orElse("Nieznany");
+                
+            csv.append(String.format("%s,%s,%s,%d,\"%s\",\"%s\",%d,\"%s\",\"%s\",\"%s\"\n",
+                s.getId(),
+                operatorName,
+                s.getCreatedAt(),
+                s.getRating(),
+                (s.getStrengths() != null ? s.getStrengths().replace("\"", "\"\"") : ""),
+                (s.getImprovements() != null ? s.getImprovements().replace("\"", "\"\"") : ""),
+                s.getRecommendRating(),
+                (s.getSource() != null ? s.getSource().replace("\"", "\"\"") : ""),
+                (s.getSourceOther() != null ? s.getSourceOther().replace("\"", "\"\"") : ""),
+                (s.getNotes() != null ? s.getNotes().replace("\"", "\"\"") : "")
+            ));
+        });
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.add(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ankiety.csv");
+        headers.add(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8");
+
+        return new ResponseEntity<>('\uFEFF' + csv.toString(), headers, org.springframework.http.HttpStatus.OK);
+    }
+
     // 6. Automatyczne przekierowanie na mapę
     @GetMapping("/")
     public void redirect(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {

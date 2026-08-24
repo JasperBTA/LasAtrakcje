@@ -43,11 +43,11 @@
 <body>
 
     <div class="container">
-        <h1 style="color: #ff9800; text-align: center;">Zarejestrowane Pomiary Czasu</h1>
+        <h1 style="color: #ef6c20; text-align: center;">Zarejestrowane Pomiary Czasu</h1>
 
         <div style="text-align: right; margin-bottom: 20px;">
-            <a href="/api/export/measurements/csv" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                ⬇️ Pobierz plik CSV (Do Google Sheets)
+            <a href="/api/export/measurements/csv" style="background-color: #1b8b39; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                Pobierz plik CSV (Do Google Sheets)
             </a>
         </div>
 
@@ -97,7 +97,7 @@
                         data: null,
                         orderable: false,
                         render: function(data, type, row) {
-                            return `<button class="btn-delete" onclick="deleteMeasurement('${row.id}')">🗑️ Usuń śmieć</button>`;
+                            return `<button class="btn-delete" onclick="deleteMeasurement('${row.id}')">Usuń</button>`;
                         }
                     }
                 ],
