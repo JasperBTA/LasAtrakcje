@@ -31,3 +31,4 @@ sed -i "s/^version: .*/version: $NEW_VERSION/" pubspec.yaml
 
 echo "Wersja podbita! Uruchamiam shorebird release android..."
 shorebird release android
+

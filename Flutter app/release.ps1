@@ -24,5 +24,6 @@ Write-Host "Podbijam wersje do: version: $newVersion" -ForegroundColor Green
 $content = $content -replace "^version:.*", "version: $newVersion"
 $content | Set-Content $pubspecPath
 
-Write-Host "Wersja zapisana. Uruchamiam shorebird release android..." -ForegroundColor Cyan
-shorebird release android
+Write-Host "Wersja zapisana. Uruchamiam C:\shorebird\bin\shorebird release android..." -ForegroundColor Cyan
+C:\shorebird\bin\shorebird release android
+
