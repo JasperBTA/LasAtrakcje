@@ -1,23 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, RefreshCcw, Activity } from 'lucide-react';
+import { Trash2, RefreshCcw, Activity, LogOut } from 'lucide-react';
+import Login from './components/Login';
 
 function App() {
+  const [token, setTokenState] = useState(() => localStorage.getItem('jwt_token') || null);
   const [measurements, setMeasurements] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Correct URL to point to the REAL backend admin controller
   const API_URL = 'http://localhost:8080/api/admin/measurements';
 
+  const setToken = (newToken) => {
+    if (newToken) {
+      localStorage.setItem('jwt_token', newToken);
+    } else {
+      localStorage.removeItem('jwt_token');
+    }
+    setTokenState(newToken);
+  };
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleAuthError = () => {
+    setToken(null);
+    showToast('Sesja wygasła. Zaloguj się ponownie.');
+  };
+
   const fetchMeasurements = async () => {
+    if (!token) return;
     setLoading(true);
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(API_URL, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setMeasurements(data);
-        setSelectedIds(new Set()); // Reset selections on refresh
+        setSelectedIds(new Set());
+      } else if (response.status === 401 || response.status === 403) {
+        handleAuthError();
+      } else {
+        showToast('Błąd pobierania danych');
       }
     } catch (error) {
       console.error('Błąd pobierania danych:', error);
@@ -28,13 +57,10 @@ function App() {
   };
 
   useEffect(() => {
-    fetchMeasurements();
-  }, []);
-
-  const showToast = (message) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+    if (token) {
+      fetchMeasurements();
+    }
+  }, [token]);
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
@@ -61,13 +87,18 @@ function App() {
     try {
       const response = await fetch(API_URL, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ ids: Array.from(selectedIds) })
       });
       
       if (response.ok) {
         showToast(`Usunięto ${selectedIds.size} pomiarów`);
         fetchMeasurements();
+      } else if (response.status === 401 || response.status === 403) {
+        handleAuthError();
       } else {
         showToast('Błąd podczas usuwania');
       }
@@ -84,6 +115,22 @@ function App() {
     return `${mins}m ${secs}s`;
   };
 
+  const handleLogout = () => {
+    setToken(null);
+    showToast('Wylogowano pomyślnie');
+  };
+
+  if (!token) {
+    return (
+      <div className="app-container">
+        <div className={`toast ${toastMessage ? 'visible' : ''}`}>
+          {toastMessage}
+        </div>
+        <Login setToken={setToken} showToast={showToast} />
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       <div className={`toast ${toastMessage ? 'visible' : ''}`}>
@@ -95,10 +142,16 @@ function App() {
           <Activity style={{ display: 'inline', marginRight: '10px', verticalAlign: 'middle', color: 'var(--primary)' }} />
           Pomiary Z Lasu
         </h1>
-        <button className="btn btn-primary" onClick={fetchMeasurements} disabled={loading}>
-          <RefreshCcw size={18} className={loading ? 'loading-skeleton' : ''} style={loading ? {background: 'transparent'} : {}} /> 
-          Odśwież Dane
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button className="btn btn-primary" onClick={fetchMeasurements} disabled={loading}>
+            <RefreshCcw size={18} className={loading ? 'loading-skeleton' : ''} style={loading ? {background: 'transparent'} : {}} /> 
+            Odśwież
+          </button>
+          <button className="btn btn-danger" onClick={handleLogout} style={{ backgroundColor: 'var(--text-muted)' }}>
+            <LogOut size={18} />
+            Wyloguj
+          </button>
+        </div>
       </header>
 
       <div className="glass-panel">
