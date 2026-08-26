@@ -271,6 +271,26 @@ class _RadarPainter extends CustomPainter {
         
       canvas.drawCircle(offset, attr.radius, borderPaint);
 
+      // Krawędź bufora (zasięg telefonu) jako przerywana pomarańczowa linia wokół strefy
+      final double triggerRadius = attr.radius + gpsAccuracyThreshold;
+      final Paint dashPaint = Paint()
+        ..color = Colors.orangeAccent.withOpacity(0.8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0 / currentScale;
+
+      const int dashCount = 36;
+      final double dashSweepAngle = (2 * math.pi) / (dashCount * 2);
+      for (int i = 0; i < dashCount * 2; i += 2) {
+        final startAngle = i * dashSweepAngle;
+        canvas.drawArc(
+          Rect.fromCircle(center: offset, radius: triggerRadius),
+          startAngle,
+          dashSweepAngle,
+          false,
+          dashPaint,
+        );
+      }
+
       // Punkt w samym środku atrakcji
       canvas.drawCircle(offset, 2.0 / currentScale, Paint()..color = Colors.white);
 
@@ -294,25 +314,6 @@ class _RadarPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     // Niebieska kropka (stała wizualnie)
     canvas.drawCircle(Offset.zero, 4.0 / currentScale, userPaint);
-    
-    // Krawędź zasięgu telefonu (według GlobalSettings) jako przerywana jasnoniebieska linia wokół użytkownika
-    final Paint dashPaint = Paint()
-      ..color = Colors.blueAccent.withOpacity(0.8)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5 / currentScale;
-
-    const int dashCount = 36;
-    final double dashSweepAngle = (2 * math.pi) / (dashCount * 2);
-    for (int i = 0; i < dashCount * 2; i += 2) {
-      final startAngle = i * dashSweepAngle;
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset.zero, radius: gpsAccuracyThreshold), // Zasięg wokół telefonu
-        startAngle,
-        dashSweepAngle,
-        false,
-        dashPaint,
-      );
-    }
 
     // Pulsujący promień radaru (minimalistyczny)
     final pulsePaint = Paint()
