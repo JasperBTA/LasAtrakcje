@@ -36,10 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
     String patchDisplay = "";
     
     try {
-      final shorebird = package_shorebird.ShorebirdCodePush();
-      final patchNumber = await shorebird.currentPatchNumber();
-      if (patchNumber != null) {
-        patchDisplay = " SP $patchNumber";
+      final shorebird = package_shorebird.ShorebirdUpdater();
+      final patch = await shorebird.readCurrentPatch();
+      if (patch != null) {
+        patchDisplay = " SP `${patch.number}";
       }
     } catch (e) {}
 
