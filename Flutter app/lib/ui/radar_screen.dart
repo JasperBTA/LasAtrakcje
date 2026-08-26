@@ -17,6 +17,7 @@ class _RadarScreenState extends State<RadarScreen> {
   StreamSubscription<Position>? _positionStream;
   Position? _currentPosition;
   List<Attraction> _attractions = [];
+  double _gpsAccuracyThreshold = 30.0;
   bool _isLoading = true;
 
   final TransformationController _transformationController = TransformationController();
@@ -56,9 +57,14 @@ class _RadarScreenState extends State<RadarScreen> {
   }
 
   Future<void> _initData() async {
-    // Pobranie atrakcji z lokalnej bazy
+    // Pobranie atrakcji i ustawień z lokalnej bazy
     final db = Provider.of<AppDatabase>(context, listen: false);
     _attractions = await db.select(db.attractions).get();
+    
+    final settingsList = await db.select(db.globalSettings).get();
+    if (settingsList.isNotEmpty) {
+      _gpsAccuracyThreshold = settingsList.first.gpsAccuracyThreshold.toDouble();
+    }
 
     // Inicjalizacja nasłuchiwania pozycji GPS
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -164,7 +170,7 @@ class _RadarScreenState extends State<RadarScreen> {
                     myPosition: _currentPosition!,
                     attractions: _attractions,
                     transformationController: _transformationController,
-                    gpsTolerance: Provider.of<AuthService>(context, listen: false).gpsTolerance,
+                    gpsAccuracyThreshold: _gpsAccuracyThreshold,
                   ),
                 ),
               ),
@@ -186,13 +192,13 @@ class _RadarPainter extends CustomPainter {
   final Position myPosition;
   final List<Attraction> attractions;
   final TransformationController transformationController;
-  final double gpsTolerance;
+  final double gpsAccuracyThreshold;
 
   _RadarPainter({
     required this.myPosition, 
     required this.attractions,
     required this.transformationController,
-    required this.gpsTolerance,
+    required this.gpsAccuracyThreshold,
   }) : super(repaint: transformationController);
 
   final double _metersPerLat = 111320.0;
@@ -265,26 +271,6 @@ class _RadarPainter extends CustomPainter {
         
       canvas.drawCircle(offset, attr.radius, borderPaint);
 
-      // Krawędź bufora (tolerancja wyjścia) jako przerywana pomarańczowa linia
-      final double triggerRadius = attr.radius + gpsTolerance;
-      final Paint dashPaint = Paint()
-        ..color = Colors.orangeAccent.withOpacity(0.8)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0 / currentScale;
-
-      const int dashCount = 36;
-      final double dashSweepAngle = (2 * math.pi) / (dashCount * 2);
-      for (int i = 0; i < dashCount * 2; i += 2) {
-        final startAngle = i * dashSweepAngle;
-        canvas.drawArc(
-          Rect.fromCircle(center: offset, radius: triggerRadius),
-          startAngle,
-          dashSweepAngle,
-          false,
-          dashPaint,
-        );
-      }
-
       // Punkt w samym środku atrakcji
       canvas.drawCircle(offset, 2.0 / currentScale, Paint()..color = Colors.white);
 
@@ -309,9 +295,28 @@ class _RadarPainter extends CustomPainter {
     // Niebieska kropka (stała wizualnie)
     canvas.drawCircle(Offset.zero, 4.0 / currentScale, userPaint);
     
-    // Pulsujący promień radaru
+    // Krawędź zasięgu telefonu (według GlobalSettings) jako przerywana jasnoniebieska linia wokół użytkownika
+    final Paint dashPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5 / currentScale;
+
+    const int dashCount = 36;
+    final double dashSweepAngle = (2 * math.pi) / (dashCount * 2);
+    for (int i = 0; i < dashCount * 2; i += 2) {
+      final startAngle = i * dashSweepAngle;
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset.zero, radius: gpsAccuracyThreshold), // Zasięg wokół telefonu
+        startAngle,
+        dashSweepAngle,
+        false,
+        dashPaint,
+      );
+    }
+
+    // Pulsujący promień radaru (minimalistyczny)
     final pulsePaint = Paint()
-      ..color = Colors.blueAccent.withOpacity(0.5)
+      ..color = Colors.blueAccent.withOpacity(0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5 / currentScale;
     canvas.drawCircle(Offset.zero, 8.0 / currentScale, pulsePaint);

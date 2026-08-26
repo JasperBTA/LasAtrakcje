@@ -470,38 +470,38 @@ class _AdminScreenState extends State<AdminScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Filtr dokładności GPS (m)'),
-                  DropdownButton<int>(
-                    value: gpsAccuracy,
-                    isExpanded: true,
-                    items: [2, 5, 10, 15, 30, 50, 80, 120].map((v) => DropdownMenuItem(value: v, child: Text('$v metrów'))).toList(),
-                    onChanged: (v) => setState(() => gpsAccuracy = v!),
+                  TextFormField(
+                    initialValue: gpsAccuracy.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(suffixText: 'm', border: OutlineInputBorder()),
+                    onChanged: (v) => gpsAccuracy = int.tryParse(v) ?? gpsAccuracy,
                   ),
                   const SizedBox(height: 16),
                   
                   const Text('Bufor wejścia (sekundy)'),
-                  DropdownButton<int>(
-                    value: entryBuffer,
-                    isExpanded: true,
-                    items: [0, 2, 4, 8, 15].map((v) => DropdownMenuItem(value: v, child: Text('$v sek.'))).toList(),
-                    onChanged: (v) => setState(() => entryBuffer = v!),
+                  TextFormField(
+                    initialValue: entryBuffer.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(suffixText: 'sek.', border: OutlineInputBorder()),
+                    onChanged: (v) => entryBuffer = int.tryParse(v) ?? entryBuffer,
                   ),
                   const SizedBox(height: 16),
                   
                   const Text('Bufor wyjścia (sekundy)'),
-                  DropdownButton<int>(
-                    value: exitBuffer,
-                    isExpanded: true,
-                    items: [0, 15, 30, 45, 60, 120].map((v) => DropdownMenuItem(value: v, child: Text('$v sek.'))).toList(),
-                    onChanged: (v) => setState(() => exitBuffer = v!),
+                  TextFormField(
+                    initialValue: exitBuffer.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(suffixText: 'sek.', border: OutlineInputBorder()),
+                    onChanged: (v) => exitBuffer = int.tryParse(v) ?? exitBuffer,
                   ),
                   const SizedBox(height: 16),
                   
                   const Text('Histereza Krawędzi (m)'),
-                  DropdownButton<int>(
-                    value: hysteresis,
-                    isExpanded: true,
-                    items: [0, 5, 10, 15, 20].map((v) => DropdownMenuItem(value: v, child: Text('$v metrów'))).toList(),
-                    onChanged: (v) => setState(() => hysteresis = v!),
+                  TextFormField(
+                    initialValue: hysteresis.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(suffixText: 'm', border: OutlineInputBorder()),
+                    onChanged: (v) => hysteresis = int.tryParse(v) ?? hysteresis,
                   ),
                 ],
               ),
