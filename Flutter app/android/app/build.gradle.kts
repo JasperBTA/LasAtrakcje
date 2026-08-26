@@ -5,6 +5,7 @@ plugins {
 }
 
 android {
+    ndkVersion = "30.0.16138531"
     namespace = "com.example.timeapp_flutter"
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
