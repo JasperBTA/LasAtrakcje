@@ -29,6 +29,6 @@ echo "Podbijam wersję do: $NEW_VERSION"
 # Podmień w pubspec.yaml (kompatybilne z systemami Linux/Mac/GitBash)
 sed -i "s/^version: .*/version: $NEW_VERSION/" pubspec.yaml
 
-echo "Wersja podbita! Uruchamiam shorebird release android..."
-shorebird release android
+echo "Wersja podbita! Uruchamiam /c/shorebird/bin/shorebird release android..."
+/c/shorebird/bin/shorebird release android
 
