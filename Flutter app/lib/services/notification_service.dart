@@ -19,7 +19,7 @@ class NotificationService {
     );
 
     await _flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         // Obługa kliknięcia w powiadomienie
       },
@@ -39,10 +39,10 @@ class NotificationService {
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await _flutterLocalNotificationsPlugin.show(
-      0, // ID stałe by nadpisywać poprzednie powiadomienie
-      title,
-      body,
-      platformChannelSpecifics,
+      id: 0, // ID stałe by nadpisywać poprzednie powiadomienie
+      title: title,
+      body: body,
+      notificationDetails: platformChannelSpecifics,
     );
   }
 }

@@ -8,6 +8,8 @@ import 'work_screen.dart';
 import 'admin_screen.dart';
 import 'dart:async';
 import '../services/geofence_service.dart';
+import '../api/api_client.dart';
+import 'radar_screen.dart';
 
 class AttractionsScreen extends StatefulWidget {
   const AttractionsScreen({Key? key}) : super(key: key);
@@ -19,7 +21,7 @@ class AttractionsScreen extends StatefulWidget {
 class _AttractionsScreenState extends State<AttractionsScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  Stream<List<Attraction>>? _attractionsStream;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -34,7 +36,19 @@ class _AttractionsScreenState extends State<AttractionsScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _searchQuery = value;
+        });
+      }
+    });
   }
 
   void _logout() async {
@@ -49,16 +63,39 @@ class _AttractionsScreenState extends State<AttractionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final db = Provider.of<AppDatabase>(context);
-    final syncService = Provider.of<SyncService>(context);
-    final geofenceService = Provider.of<GeofenceService>(context);
-
-    // Leniwa inicjalizacja strumienia dla bezpieczeństwa podczas Hot Reload
-    _attractionsStream ??= db.select(db.attractions).watch();
+    // NIE nasłuchujemy całej klasy SyncService ani GeofenceService, żeby nie odświeżać całego ekranu
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    
+    // Przebuduje się jedynie wtedy, kiedy zatwierdzimy nową frazę (dzięki debounce)
+    final stream = db.watchActiveAttractions(_searchQuery);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wybierz Atrakcję'),
+        title: GestureDetector(
+          onLongPress: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Tryb Odkrywcy 📡'),
+                content: const Text('Czy chcesz otworzyć radar sferyczny (działa w 100% offline)?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Anuluj'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const RadarScreen()));
+                    },
+                    child: const Text('Otwórz Radar'),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: const Text('Wybierz Atrakcję'),
+        ),
         actions: [
           if (Provider.of<AuthService>(context, listen: false).isAdmin)
             IconButton(
@@ -68,19 +105,25 @@ class _AttractionsScreenState extends State<AttractionsScreen> {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminScreen()));
               },
             ),
-          IconButton(
-            icon: syncService.isSyncing 
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Icon(Icons.sync),
-            onPressed: () async {
-              final message = await syncService.syncAll();
-              
-              if (mounted && message.isNotEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
-                );
-              }
-            },
+          Consumer<SyncService>(
+            builder: (context, syncService, child) {
+              return IconButton(
+                icon: syncService.isSyncing 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.sync),
+                onPressed: () async {
+                  final message = await syncService.syncAll();
+                  if (context.mounted && message.isNotEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
+                    );
+                    // Jeżeli pracownik stoi w miejscu podczas pobierania bazy,
+                    // wymuszamy ręczne sprawdzenie promienia GPS.
+                    Provider.of<GeofenceService>(context, listen: false).forceLocationCheck();
+                  }
+                },
+              );
+            }
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -90,75 +133,122 @@ class _AttractionsScreenState extends State<AttractionsScreen> {
       ),
       body: Column(
         children: [
-          _ActiveMeasurementBanner(
-            geofenceService: geofenceService,
-            attractionsStream: _attractionsStream,
+          Consumer<GeofenceService>(
+            builder: (context, geofenceService, child) {
+              return _ActiveMeasurementBanner(
+                geofenceService: geofenceService,
+                attractionsStream: db.select(db.attractions).watch(),
+              );
+            }
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-              decoration: InputDecoration(
-                labelText: 'Szukaj atrakcji...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+          
+          if (Provider.of<AuthService>(context, listen: false).isAdmin) ...[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _onSearchChanged,
+                decoration: InputDecoration(
+                  labelText: 'Szukaj atrakcji...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
               ),
             ),
-          ),
-          Expanded(
-            child: StreamBuilder<List<Attraction>>(
-              stream: _attractionsStream!,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                
-                final allAttractions = snapshot.data!.where((a) => a.isActive).toList();
-                final attractions = allAttractions.where((a) => 
-                  a.name.toLowerCase().contains(_searchQuery.toLowerCase())
-                ).toList();
+            Expanded(
+              child: StreamBuilder<List<Attraction>>(
+                stream: stream,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  
+                  final attractions = snapshot.data!;
 
-                if (allAttractions.isEmpty) {
-                  return const Center(child: Text('Brak zapisanych atrakcji. Kliknij ikonę synchronizacji.'));
-                }
+                  if (attractions.isEmpty) {
+                    if (_searchQuery.isNotEmpty) {
+                      return const Center(child: Text('Nie znaleziono atrakcji dla tego hasła.'));
+                    }
+                    return const Center(child: Text('Brak zapisanych atrakcji. Kliknij ikonę synchronizacji.'));
+                  }
 
-                if (attractions.isEmpty) {
-                  return const Center(child: Text('Nie znaleziono atrakcji dla tego hasła.'));
-                }
-
-                return ListView.builder(
-                  itemCount: attractions.length,
-                  itemBuilder: (context, index) {
-                    final attraction = attractions[index];
-                    final isActiveGeofence = geofenceService.currentActiveAttractionId == attraction.id;
-
-                    return ListTile(
-                      tileColor: isActiveGeofence ? Colors.green.withOpacity(0.2) : null,
-                      title: Text(attraction.name, style: TextStyle(fontWeight: isActiveGeofence ? FontWeight.bold : FontWeight.normal)),
-                      subtitle: isActiveGeofence ? const Text('Trwa automatyczny pomiar (Jesteś w strefie)', style: TextStyle(color: Colors.green)) : null,
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => WorkScreen(attraction: attraction),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
+                  return ListView.builder(
+                    itemCount: attractions.length,
+                    itemBuilder: (context, index) {
+                      final attraction = attractions[index];
+                      // Consumer punktowy tylko dla konkretnego elementu listy
+                      return Consumer<GeofenceService>(
+                        builder: (context, geofenceService, child) {
+                          final isActiveGeofence = geofenceService.currentActiveAttractionId == attraction.id;
+                          return AttractionListItem(
+                            attraction: attraction,
+                            isActiveGeofence: isActiveGeofence,
+                          );
+                        }
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
+          ] else ...[
+            const Expanded(
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.radar, size: 80, color: Colors.grey),
+                      SizedBox(height: 24),
+                      Text(
+                        'Oczekiwanie na strefę...',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Aplikacja automatycznie rozpocznie pomiar czasu, gdy zbliżysz się do przypisanej atrakcji w lesie.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.black54),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class AttractionListItem extends StatelessWidget {
+  final Attraction attraction;
+  final bool isActiveGeofence;
+
+  const AttractionListItem({
+    Key? key,
+    required this.attraction,
+    required this.isActiveGeofence,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      tileColor: isActiveGeofence ? Colors.green.withValues(alpha: 0.2) : null,
+      title: Text(attraction.name, style: TextStyle(fontWeight: isActiveGeofence ? FontWeight.bold : FontWeight.normal)),
+      subtitle: isActiveGeofence ? const Text('Trwa automatyczny pomiar (Jesteś w strefie)', style: TextStyle(color: Colors.green)) : null,
+      trailing: const Icon(Icons.arrow_forward_ios),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WorkScreen(attraction: attraction),
+          ),
+        );
+      },
     );
   }
 }
@@ -282,7 +372,7 @@ class __ActiveMeasurementBannerState extends State<_ActiveMeasurementBanner> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton.icon(
-                      style: TextButton.styleFrom(foregroundColor: Colors.white, backgroundColor: Colors.redAccent.withOpacity(0.8)),
+                      style: TextButton.styleFrom(foregroundColor: Colors.white, backgroundColor: Colors.redAccent.withValues(alpha: 0.8)),
                       icon: const Icon(Icons.delete_forever),
                       label: const Text("Odrzuć pomiar (Pomyłka)"),
                       onPressed: () {

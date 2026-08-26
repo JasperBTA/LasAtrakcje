@@ -148,4 +148,18 @@ public class AdminController {
         measurementRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("status", "success"));
     }
+
+    @GetMapping("/measurements")
+    public ResponseEntity<List<com.las.timeapp.model.Measurement>> getMeasurements() {
+        return ResponseEntity.ok(measurementRepository.findAll());
+    }
+
+    @DeleteMapping("/measurements")
+    public ResponseEntity<?> deleteMeasurementsBulk(@RequestBody Map<String, List<UUID>> body) {
+        List<UUID> ids = body.get("ids");
+        if (ids != null && !ids.isEmpty()) {
+            measurementRepository.deleteAllById(ids);
+        }
+        return ResponseEntity.ok(Map.of("status", "success", "deletedCount", ids == null ? 0 : ids.size()));
+    }
 }

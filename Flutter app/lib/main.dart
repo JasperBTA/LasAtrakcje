@@ -6,23 +6,37 @@ import 'services/sync_service.dart';
 import 'services/geofence_service.dart';
 import 'ui/login_screen.dart';
 import 'ui/attractions_screen.dart';
+import 'ui/surveyor_screen.dart';
 
 import 'services/notification_service.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
   await NotificationService().init();
   
   final db = AppDatabase();
   final authService = AuthService(db);
-  final syncService = SyncService(db);
+  final syncService = SyncService(db, authService);
   final geofenceService = GeofenceService(db, authService);
 
+  await runTimeApp(
+    db: db,
+    authService: authService,
+    syncService: syncService,
+    geofenceService: geofenceService,
+  );
+}
+
+Future<void> runTimeApp({
+  required AppDatabase db,
+  required AuthService authService,
+  required SyncService syncService,
+  required GeofenceService geofenceService,
+}) async {
   // Sprawdź czy token jest w secure storage i jeśli tak, zaloguj automatycznie
   await authService.checkLoginStatus();
   
-  if (authService.isAuthenticated) {
+  if (authService.isAuthenticated && !authService.isSurveyor) {
     geofenceService.startGeofencing();
   }
 
@@ -55,7 +69,7 @@ class TimeApp extends StatelessWidget {
           primary: const Color(0xFF2E8B57),
           secondary: const Color(0xFFF47C20), // Pomarańcz
           tertiary: const Color(0xFF8B5A2B), // Brąz
-          background: const Color(0xFFF9F9F9),
+          surface: const Color(0xFFF9F9F9),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF2E8B57),
@@ -84,7 +98,7 @@ class TimeApp extends StatelessWidget {
         ),
       ),
       home: authService.isAuthenticated 
-          ? const AttractionsScreen() 
+          ? (authService.isSurveyor ? const SurveyorScreen() : const AttractionsScreen())
           : const LoginScreen(),
     );
   }

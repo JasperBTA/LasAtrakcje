@@ -6,6 +6,8 @@ import com.las.timeapp.model.User;
 import com.las.timeapp.repository.AttractionRepository;
 import com.las.timeapp.repository.MeasurementRepository;
 import com.las.timeapp.repository.UserRepository;
+import com.las.timeapp.entity.Survey;
+import com.las.timeapp.repository.SurveyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,9 @@ class ExportControllerIntegrationTest {
 
     @Autowired
     private AttractionRepository attractionRepository;
+
+    @Autowired
+    private SurveyRepository surveyRepository;
 
     private UUID userId;
     private UUID attractionId;
@@ -74,6 +79,17 @@ class ExportControllerIntegrationTest {
         m.setTotalDurationSeconds(3600);
         m.setSyncStatus("SYNCED");
         measurementRepository.save(m);
+
+        // Dodanie testowej ankiety
+        surveyRepository.deleteAll();
+        Survey survey = new Survey();
+        survey.setId(UUID.randomUUID().toString());
+        survey.setOperatorId(userId);
+        survey.setCreatedAt("2026-08-20T10:00:00Z");
+        survey.setRating(5);
+        survey.setStrengths("Brak uwag");
+        survey.setRecommendRating(10);
+        surveyRepository.save(survey);
     }
 
     @Test
@@ -98,5 +114,26 @@ class ExportControllerIntegrationTest {
                 .andExpect(content().string(containsString("Wieza Widokowa")))
                 .andExpect(content().string(containsString("3600")))
                 .andExpect(content().string(containsString("SYNCED")));
+    }
+    @Test
+    @WithMockUser
+    void shouldExportSurveysJsonData() throws Exception {
+        mockMvc.perform(get("/api/export/surveys/json"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$[0].operatorName").value("TestowyPracownik"))
+                .andExpect(jsonPath("$[0].rating").value(5));
+    }
+
+    @Test
+    @WithMockUser
+    void shouldExportSurveysCsvData() throws Exception {
+        mockMvc.perform(get("/api/export/surveys/csv"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/csv"))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=ankiety.csv"))
+                .andExpect(content().string(containsString("TestowyPracownik")))
+                .andExpect(content().string(containsString("Bardzo polecam")))
+                .andExpect(content().string(containsString("Brak uwag")));
     }
 }

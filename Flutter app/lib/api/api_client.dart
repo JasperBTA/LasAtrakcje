@@ -1,19 +1,27 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
   // Adres produkcyjny VM w lesie (zmień na 10.0.2.2 dla emulatora)
-  // Adres produkcyjny serwera RDP (wcześniej było 10.0.2.2)
-  static const String baseUrl = 'http://192.168.151.13:8080/api';
+  // Adres serwera LAN / Roboczego
+  static String baseUrl = 'http://192.168.151.13:8080/api';
+  
+  static String get mapUrl {
+    return baseUrl.replaceAll('/api', '/mapa.html');
+  }
+
   final _storage = const FlutterSecureStorage();
 
   Future<Map<String, String>> _getHeaders() async {
     String? token = await _storage.read(key: 'jwt_token');
-    return {
+    final headers = {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
+    debugPrint('--- WYSYŁAMY ŻĄDANIE Z TOKENEM: $token ---');
+    return headers;
   }
 
   Future<http.Response> post(String endpoint, Map<String, dynamic> body) async {

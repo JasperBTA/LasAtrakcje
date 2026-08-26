@@ -3,23 +3,38 @@ import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 import '../database/database.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'auth_service.dart';
 
 class SyncService extends ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
   final AppDatabase _database;
+  final AuthService _authService;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   bool _isSyncing = false;
 
   bool get isSyncing => _isSyncing;
 
-  SyncService(this._database);
+  SyncService(this._database, this._authService);
 
   Future<String> syncAll() async {
     if (_isSyncing) return "Synchronizacja już trwa...";
     _isSyncing = true;
     notifyListeners();
 
+    String? token = await _storage.read(key: 'jwt_token');
+    if (token != null && token.startsWith('offline_token_')) {
+      bool success = await _authService.autoLoginWithSavedCredentials();
+      if (!success) {
+        _isSyncing = false;
+        notifyListeners();
+        return "Jesteś w trybie offline. Połącz się z siecią, aby zsynchronizować dane.";
+      }
+    }
+
     try {
       final resultMeasurements = await syncMeasurements(notify: false);
+      await fetchGlobalSettings();
       await syncAttractionsCoordinates();
       await syncNewAttractions();
       await syncUsers();
@@ -36,6 +51,27 @@ class SyncService extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchGlobalSettings() async {
+    try {
+      final response = await _apiClient.get('/settings');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await _database.into(_database.globalSettings).insert(
+          GlobalSettingsCompanion(
+            id: const drift.Value(1),
+            gpsAccuracyThreshold: drift.Value(data['gpsAccuracyThreshold'] ?? 50),
+            entryBufferSeconds: drift.Value(data['entryBufferSeconds'] ?? 4),
+            exitBufferSeconds: drift.Value(data['exitBufferSeconds'] ?? 45),
+            hysteresisMargin: drift.Value(data['hysteresisMargin'] ?? 10),
+          ),
+          mode: drift.InsertMode.insertOrReplace,
+        );
+      }
+    } catch (e) {
+      debugPrint("Nie udało się pobrać ustawień globalnych: $e");
+    }
+  }
+
   Future<String?> fetchAttractions({bool notify = true}) async {
     final stopwatch = Stopwatch()..start();
     try {
@@ -46,20 +82,21 @@ class SyncService extends ChangeNotifier {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is List) {
           stopwatch.reset();
-          await _database.transaction(() async {
-            for (var item in decoded) {
-              await _database.into(_database.attractions).insertOnConflictUpdate(
-                AttractionsCompanion(
-                  id: drift.Value(item['id'] ?? ''),
-                  name: drift.Value(item['name'] ?? 'Nieznana'),
-                  latitude: drift.Value((item['latitude'] as num?)?.toDouble() ?? 0.0),
-                  longitude: drift.Value((item['longitude'] as num?)?.toDouble() ?? 0.0),
-                  radius: drift.Value((item['radius'] as num?)?.toDouble() ?? 10.0),
-                  isActive: drift.Value(item['isActive'] ?? item['active'] ?? true),
-                  syncStatus: const drift.Value('SYNCED'),
-                )
-              );
-            }
+          // Optymalizacja: Zamiast wielu asynchronicznych zapytań (pętla i await) używamy 
+          // jednego, ekstremalnie szybkiego wsadu (Batch) dla SQLite. Zniweluje to przycinki.
+          await _database.batch((batch) {
+            batch.insertAllOnConflictUpdate(
+              _database.attractions,
+              decoded.map((item) => AttractionsCompanion(
+                id: drift.Value(item['id'] ?? ''),
+                name: drift.Value(item['name'] ?? 'Nieznana'),
+                latitude: drift.Value((item['latitude'] as num?)?.toDouble() ?? 0.0),
+                longitude: drift.Value((item['longitude'] as num?)?.toDouble() ?? 0.0),
+                radius: drift.Value((item['radius'] as num?)?.toDouble() ?? 10.0),
+                isActive: drift.Value(item['isActive'] ?? item['active'] ?? true),
+                syncStatus: const drift.Value('SYNCED'),
+              )).toList(),
+            );
           });
           final sqlTime = stopwatch.elapsedMilliseconds;
           return "Pobrano atrakcje (HTTP: ${httpTime}ms, SQL: ${sqlTime}ms)";
@@ -96,8 +133,8 @@ class SyncService extends ChangeNotifier {
           'id': m.id,
           'operatorId': m.operatorId,
           'attractionId': m.attractionId,
-          'startTime': m.startTime.toIso8601String(),
-          'stopTime': m.stopTime?.toIso8601String(),
+          'startTime': m.startTime.toUtc().toIso8601String(),
+          'stopTime': m.stopTime?.toUtc().toIso8601String(),
           'totalDurationSeconds': m.totalDurationSeconds,
         }).toList()
       };
@@ -197,18 +234,18 @@ class SyncService extends ChangeNotifier {
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
         if (decoded is List) {
-          await _database.transaction(() async {
-            for (var item in decoded) {
-              await _database.into(_database.users).insertOnConflictUpdate(
-                UsersCompanion(
-                  id: drift.Value(item['id'] ?? ''),
-                  username: drift.Value(item['username'] ?? ''),
-                  passwordHash: drift.Value(item['passwordHash'] ?? ''),
-                  pinHash: drift.Value(item['pinHash'] ?? ''),
-                  role: drift.Value(item['role'] ?? 'WORKER'),
-                )
-              );
-            }
+          // Używamy Batch zamiast Transaction dla szybszego przetworzenia i ominięcia lagów UI
+          await _database.batch((batch) {
+            batch.insertAllOnConflictUpdate(
+              _database.users,
+              decoded.map((item) => UsersCompanion(
+                id: drift.Value(item['id'] ?? ''),
+                username: drift.Value(item['username'] ?? ''),
+                passwordHash: drift.Value(item['passwordHash'] ?? ''),
+                pinHash: drift.Value(item['pinHash'] ?? ''),
+                role: drift.Value(item['role'] ?? 'WORKER'),
+              )).toList()
+            );
           });
         }
       } else {

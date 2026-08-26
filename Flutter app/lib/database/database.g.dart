@@ -1114,18 +1114,895 @@ class MeasurementsCompanion extends UpdateCompanion<Measurement> {
   }
 }
 
+class $SurveysTable extends Surveys with TableInfo<$SurveysTable, Survey> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SurveysTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _operatorIdMeta =
+      const VerificationMeta('operatorId');
+  @override
+  late final GeneratedColumn<String> operatorId = GeneratedColumn<String>(
+      'operator_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _ratingMeta = const VerificationMeta('rating');
+  @override
+  late final GeneratedColumn<int> rating = GeneratedColumn<int>(
+      'rating', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _strengthsMeta =
+      const VerificationMeta('strengths');
+  @override
+  late final GeneratedColumn<String> strengths = GeneratedColumn<String>(
+      'strengths', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _improvementsMeta =
+      const VerificationMeta('improvements');
+  @override
+  late final GeneratedColumn<String> improvements = GeneratedColumn<String>(
+      'improvements', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _recommendRatingMeta =
+      const VerificationMeta('recommendRating');
+  @override
+  late final GeneratedColumn<int> recommendRating = GeneratedColumn<int>(
+      'recommend_rating', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sourceOtherMeta =
+      const VerificationMeta('sourceOther');
+  @override
+  late final GeneratedColumn<String> sourceOther = GeneratedColumn<String>(
+      'source_other', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+      'notes', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('PENDING'));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        operatorId,
+        createdAt,
+        rating,
+        strengths,
+        improvements,
+        recommendRating,
+        source,
+        sourceOther,
+        notes,
+        syncStatus
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'surveys';
+  @override
+  VerificationContext validateIntegrity(Insertable<Survey> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('operator_id')) {
+      context.handle(
+          _operatorIdMeta,
+          operatorId.isAcceptableOrUnknown(
+              data['operator_id']!, _operatorIdMeta));
+    } else if (isInserting) {
+      context.missing(_operatorIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('rating')) {
+      context.handle(_ratingMeta,
+          rating.isAcceptableOrUnknown(data['rating']!, _ratingMeta));
+    } else if (isInserting) {
+      context.missing(_ratingMeta);
+    }
+    if (data.containsKey('strengths')) {
+      context.handle(_strengthsMeta,
+          strengths.isAcceptableOrUnknown(data['strengths']!, _strengthsMeta));
+    } else if (isInserting) {
+      context.missing(_strengthsMeta);
+    }
+    if (data.containsKey('improvements')) {
+      context.handle(
+          _improvementsMeta,
+          improvements.isAcceptableOrUnknown(
+              data['improvements']!, _improvementsMeta));
+    } else if (isInserting) {
+      context.missing(_improvementsMeta);
+    }
+    if (data.containsKey('recommend_rating')) {
+      context.handle(
+          _recommendRatingMeta,
+          recommendRating.isAcceptableOrUnknown(
+              data['recommend_rating']!, _recommendRatingMeta));
+    } else if (isInserting) {
+      context.missing(_recommendRatingMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('source_other')) {
+      context.handle(
+          _sourceOtherMeta,
+          sourceOther.isAcceptableOrUnknown(
+              data['source_other']!, _sourceOtherMeta));
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Survey map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Survey(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      operatorId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}operator_id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      rating: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}rating'])!,
+      strengths: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}strengths'])!,
+      improvements: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}improvements'])!,
+      recommendRating: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}recommend_rating'])!,
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      sourceOther: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source_other']),
+      notes: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
+    );
+  }
+
+  @override
+  $SurveysTable createAlias(String alias) {
+    return $SurveysTable(attachedDatabase, alias);
+  }
+}
+
+class Survey extends DataClass implements Insertable<Survey> {
+  final String id;
+  final String operatorId;
+  final DateTime createdAt;
+  final int rating;
+  final String strengths;
+  final String improvements;
+  final int recommendRating;
+  final String source;
+  final String? sourceOther;
+  final String? notes;
+  final String syncStatus;
+  const Survey(
+      {required this.id,
+      required this.operatorId,
+      required this.createdAt,
+      required this.rating,
+      required this.strengths,
+      required this.improvements,
+      required this.recommendRating,
+      required this.source,
+      this.sourceOther,
+      this.notes,
+      required this.syncStatus});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['operator_id'] = Variable<String>(operatorId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['rating'] = Variable<int>(rating);
+    map['strengths'] = Variable<String>(strengths);
+    map['improvements'] = Variable<String>(improvements);
+    map['recommend_rating'] = Variable<int>(recommendRating);
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || sourceOther != null) {
+      map['source_other'] = Variable<String>(sourceOther);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['sync_status'] = Variable<String>(syncStatus);
+    return map;
+  }
+
+  SurveysCompanion toCompanion(bool nullToAbsent) {
+    return SurveysCompanion(
+      id: Value(id),
+      operatorId: Value(operatorId),
+      createdAt: Value(createdAt),
+      rating: Value(rating),
+      strengths: Value(strengths),
+      improvements: Value(improvements),
+      recommendRating: Value(recommendRating),
+      source: Value(source),
+      sourceOther: sourceOther == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceOther),
+      notes:
+          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      syncStatus: Value(syncStatus),
+    );
+  }
+
+  factory Survey.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Survey(
+      id: serializer.fromJson<String>(json['id']),
+      operatorId: serializer.fromJson<String>(json['operatorId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      rating: serializer.fromJson<int>(json['rating']),
+      strengths: serializer.fromJson<String>(json['strengths']),
+      improvements: serializer.fromJson<String>(json['improvements']),
+      recommendRating: serializer.fromJson<int>(json['recommendRating']),
+      source: serializer.fromJson<String>(json['source']),
+      sourceOther: serializer.fromJson<String?>(json['sourceOther']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'operatorId': serializer.toJson<String>(operatorId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'rating': serializer.toJson<int>(rating),
+      'strengths': serializer.toJson<String>(strengths),
+      'improvements': serializer.toJson<String>(improvements),
+      'recommendRating': serializer.toJson<int>(recommendRating),
+      'source': serializer.toJson<String>(source),
+      'sourceOther': serializer.toJson<String?>(sourceOther),
+      'notes': serializer.toJson<String?>(notes),
+      'syncStatus': serializer.toJson<String>(syncStatus),
+    };
+  }
+
+  Survey copyWith(
+          {String? id,
+          String? operatorId,
+          DateTime? createdAt,
+          int? rating,
+          String? strengths,
+          String? improvements,
+          int? recommendRating,
+          String? source,
+          Value<String?> sourceOther = const Value.absent(),
+          Value<String?> notes = const Value.absent(),
+          String? syncStatus}) =>
+      Survey(
+        id: id ?? this.id,
+        operatorId: operatorId ?? this.operatorId,
+        createdAt: createdAt ?? this.createdAt,
+        rating: rating ?? this.rating,
+        strengths: strengths ?? this.strengths,
+        improvements: improvements ?? this.improvements,
+        recommendRating: recommendRating ?? this.recommendRating,
+        source: source ?? this.source,
+        sourceOther: sourceOther.present ? sourceOther.value : this.sourceOther,
+        notes: notes.present ? notes.value : this.notes,
+        syncStatus: syncStatus ?? this.syncStatus,
+      );
+  Survey copyWithCompanion(SurveysCompanion data) {
+    return Survey(
+      id: data.id.present ? data.id.value : this.id,
+      operatorId:
+          data.operatorId.present ? data.operatorId.value : this.operatorId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      rating: data.rating.present ? data.rating.value : this.rating,
+      strengths: data.strengths.present ? data.strengths.value : this.strengths,
+      improvements: data.improvements.present
+          ? data.improvements.value
+          : this.improvements,
+      recommendRating: data.recommendRating.present
+          ? data.recommendRating.value
+          : this.recommendRating,
+      source: data.source.present ? data.source.value : this.source,
+      sourceOther:
+          data.sourceOther.present ? data.sourceOther.value : this.sourceOther,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Survey(')
+          ..write('id: $id, ')
+          ..write('operatorId: $operatorId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rating: $rating, ')
+          ..write('strengths: $strengths, ')
+          ..write('improvements: $improvements, ')
+          ..write('recommendRating: $recommendRating, ')
+          ..write('source: $source, ')
+          ..write('sourceOther: $sourceOther, ')
+          ..write('notes: $notes, ')
+          ..write('syncStatus: $syncStatus')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, operatorId, createdAt, rating, strengths,
+      improvements, recommendRating, source, sourceOther, notes, syncStatus);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Survey &&
+          other.id == this.id &&
+          other.operatorId == this.operatorId &&
+          other.createdAt == this.createdAt &&
+          other.rating == this.rating &&
+          other.strengths == this.strengths &&
+          other.improvements == this.improvements &&
+          other.recommendRating == this.recommendRating &&
+          other.source == this.source &&
+          other.sourceOther == this.sourceOther &&
+          other.notes == this.notes &&
+          other.syncStatus == this.syncStatus);
+}
+
+class SurveysCompanion extends UpdateCompanion<Survey> {
+  final Value<String> id;
+  final Value<String> operatorId;
+  final Value<DateTime> createdAt;
+  final Value<int> rating;
+  final Value<String> strengths;
+  final Value<String> improvements;
+  final Value<int> recommendRating;
+  final Value<String> source;
+  final Value<String?> sourceOther;
+  final Value<String?> notes;
+  final Value<String> syncStatus;
+  final Value<int> rowid;
+  const SurveysCompanion({
+    this.id = const Value.absent(),
+    this.operatorId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rating = const Value.absent(),
+    this.strengths = const Value.absent(),
+    this.improvements = const Value.absent(),
+    this.recommendRating = const Value.absent(),
+    this.source = const Value.absent(),
+    this.sourceOther = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SurveysCompanion.insert({
+    required String id,
+    required String operatorId,
+    required DateTime createdAt,
+    required int rating,
+    required String strengths,
+    required String improvements,
+    required int recommendRating,
+    required String source,
+    this.sourceOther = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        operatorId = Value(operatorId),
+        createdAt = Value(createdAt),
+        rating = Value(rating),
+        strengths = Value(strengths),
+        improvements = Value(improvements),
+        recommendRating = Value(recommendRating),
+        source = Value(source);
+  static Insertable<Survey> custom({
+    Expression<String>? id,
+    Expression<String>? operatorId,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rating,
+    Expression<String>? strengths,
+    Expression<String>? improvements,
+    Expression<int>? recommendRating,
+    Expression<String>? source,
+    Expression<String>? sourceOther,
+    Expression<String>? notes,
+    Expression<String>? syncStatus,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (operatorId != null) 'operator_id': operatorId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rating != null) 'rating': rating,
+      if (strengths != null) 'strengths': strengths,
+      if (improvements != null) 'improvements': improvements,
+      if (recommendRating != null) 'recommend_rating': recommendRating,
+      if (source != null) 'source': source,
+      if (sourceOther != null) 'source_other': sourceOther,
+      if (notes != null) 'notes': notes,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SurveysCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? operatorId,
+      Value<DateTime>? createdAt,
+      Value<int>? rating,
+      Value<String>? strengths,
+      Value<String>? improvements,
+      Value<int>? recommendRating,
+      Value<String>? source,
+      Value<String?>? sourceOther,
+      Value<String?>? notes,
+      Value<String>? syncStatus,
+      Value<int>? rowid}) {
+    return SurveysCompanion(
+      id: id ?? this.id,
+      operatorId: operatorId ?? this.operatorId,
+      createdAt: createdAt ?? this.createdAt,
+      rating: rating ?? this.rating,
+      strengths: strengths ?? this.strengths,
+      improvements: improvements ?? this.improvements,
+      recommendRating: recommendRating ?? this.recommendRating,
+      source: source ?? this.source,
+      sourceOther: sourceOther ?? this.sourceOther,
+      notes: notes ?? this.notes,
+      syncStatus: syncStatus ?? this.syncStatus,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (operatorId.present) {
+      map['operator_id'] = Variable<String>(operatorId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rating.present) {
+      map['rating'] = Variable<int>(rating.value);
+    }
+    if (strengths.present) {
+      map['strengths'] = Variable<String>(strengths.value);
+    }
+    if (improvements.present) {
+      map['improvements'] = Variable<String>(improvements.value);
+    }
+    if (recommendRating.present) {
+      map['recommend_rating'] = Variable<int>(recommendRating.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (sourceOther.present) {
+      map['source_other'] = Variable<String>(sourceOther.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SurveysCompanion(')
+          ..write('id: $id, ')
+          ..write('operatorId: $operatorId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rating: $rating, ')
+          ..write('strengths: $strengths, ')
+          ..write('improvements: $improvements, ')
+          ..write('recommendRating: $recommendRating, ')
+          ..write('source: $source, ')
+          ..write('sourceOther: $sourceOther, ')
+          ..write('notes: $notes, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GlobalSettingsTable extends GlobalSettings
+    with TableInfo<$GlobalSettingsTable, GlobalSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GlobalSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _gpsAccuracyThresholdMeta =
+      const VerificationMeta('gpsAccuracyThreshold');
+  @override
+  late final GeneratedColumn<int> gpsAccuracyThreshold = GeneratedColumn<int>(
+      'gps_accuracy_threshold', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(50));
+  static const VerificationMeta _entryBufferSecondsMeta =
+      const VerificationMeta('entryBufferSeconds');
+  @override
+  late final GeneratedColumn<int> entryBufferSeconds = GeneratedColumn<int>(
+      'entry_buffer_seconds', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(4));
+  static const VerificationMeta _exitBufferSecondsMeta =
+      const VerificationMeta('exitBufferSeconds');
+  @override
+  late final GeneratedColumn<int> exitBufferSeconds = GeneratedColumn<int>(
+      'exit_buffer_seconds', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(45));
+  static const VerificationMeta _hysteresisMarginMeta =
+      const VerificationMeta('hysteresisMargin');
+  @override
+  late final GeneratedColumn<int> hysteresisMargin = GeneratedColumn<int>(
+      'hysteresis_margin', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(10));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        gpsAccuracyThreshold,
+        entryBufferSeconds,
+        exitBufferSeconds,
+        hysteresisMargin
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'global_settings';
+  @override
+  VerificationContext validateIntegrity(Insertable<GlobalSetting> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('gps_accuracy_threshold')) {
+      context.handle(
+          _gpsAccuracyThresholdMeta,
+          gpsAccuracyThreshold.isAcceptableOrUnknown(
+              data['gps_accuracy_threshold']!, _gpsAccuracyThresholdMeta));
+    }
+    if (data.containsKey('entry_buffer_seconds')) {
+      context.handle(
+          _entryBufferSecondsMeta,
+          entryBufferSeconds.isAcceptableOrUnknown(
+              data['entry_buffer_seconds']!, _entryBufferSecondsMeta));
+    }
+    if (data.containsKey('exit_buffer_seconds')) {
+      context.handle(
+          _exitBufferSecondsMeta,
+          exitBufferSeconds.isAcceptableOrUnknown(
+              data['exit_buffer_seconds']!, _exitBufferSecondsMeta));
+    }
+    if (data.containsKey('hysteresis_margin')) {
+      context.handle(
+          _hysteresisMarginMeta,
+          hysteresisMargin.isAcceptableOrUnknown(
+              data['hysteresis_margin']!, _hysteresisMarginMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GlobalSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GlobalSetting(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      gpsAccuracyThreshold: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}gps_accuracy_threshold'])!,
+      entryBufferSeconds: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}entry_buffer_seconds'])!,
+      exitBufferSeconds: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}exit_buffer_seconds'])!,
+      hysteresisMargin: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}hysteresis_margin'])!,
+    );
+  }
+
+  @override
+  $GlobalSettingsTable createAlias(String alias) {
+    return $GlobalSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class GlobalSetting extends DataClass implements Insertable<GlobalSetting> {
+  final int id;
+  final int gpsAccuracyThreshold;
+  final int entryBufferSeconds;
+  final int exitBufferSeconds;
+  final int hysteresisMargin;
+  const GlobalSetting(
+      {required this.id,
+      required this.gpsAccuracyThreshold,
+      required this.entryBufferSeconds,
+      required this.exitBufferSeconds,
+      required this.hysteresisMargin});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['gps_accuracy_threshold'] = Variable<int>(gpsAccuracyThreshold);
+    map['entry_buffer_seconds'] = Variable<int>(entryBufferSeconds);
+    map['exit_buffer_seconds'] = Variable<int>(exitBufferSeconds);
+    map['hysteresis_margin'] = Variable<int>(hysteresisMargin);
+    return map;
+  }
+
+  GlobalSettingsCompanion toCompanion(bool nullToAbsent) {
+    return GlobalSettingsCompanion(
+      id: Value(id),
+      gpsAccuracyThreshold: Value(gpsAccuracyThreshold),
+      entryBufferSeconds: Value(entryBufferSeconds),
+      exitBufferSeconds: Value(exitBufferSeconds),
+      hysteresisMargin: Value(hysteresisMargin),
+    );
+  }
+
+  factory GlobalSetting.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GlobalSetting(
+      id: serializer.fromJson<int>(json['id']),
+      gpsAccuracyThreshold:
+          serializer.fromJson<int>(json['gpsAccuracyThreshold']),
+      entryBufferSeconds: serializer.fromJson<int>(json['entryBufferSeconds']),
+      exitBufferSeconds: serializer.fromJson<int>(json['exitBufferSeconds']),
+      hysteresisMargin: serializer.fromJson<int>(json['hysteresisMargin']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'gpsAccuracyThreshold': serializer.toJson<int>(gpsAccuracyThreshold),
+      'entryBufferSeconds': serializer.toJson<int>(entryBufferSeconds),
+      'exitBufferSeconds': serializer.toJson<int>(exitBufferSeconds),
+      'hysteresisMargin': serializer.toJson<int>(hysteresisMargin),
+    };
+  }
+
+  GlobalSetting copyWith(
+          {int? id,
+          int? gpsAccuracyThreshold,
+          int? entryBufferSeconds,
+          int? exitBufferSeconds,
+          int? hysteresisMargin}) =>
+      GlobalSetting(
+        id: id ?? this.id,
+        gpsAccuracyThreshold: gpsAccuracyThreshold ?? this.gpsAccuracyThreshold,
+        entryBufferSeconds: entryBufferSeconds ?? this.entryBufferSeconds,
+        exitBufferSeconds: exitBufferSeconds ?? this.exitBufferSeconds,
+        hysteresisMargin: hysteresisMargin ?? this.hysteresisMargin,
+      );
+  GlobalSetting copyWithCompanion(GlobalSettingsCompanion data) {
+    return GlobalSetting(
+      id: data.id.present ? data.id.value : this.id,
+      gpsAccuracyThreshold: data.gpsAccuracyThreshold.present
+          ? data.gpsAccuracyThreshold.value
+          : this.gpsAccuracyThreshold,
+      entryBufferSeconds: data.entryBufferSeconds.present
+          ? data.entryBufferSeconds.value
+          : this.entryBufferSeconds,
+      exitBufferSeconds: data.exitBufferSeconds.present
+          ? data.exitBufferSeconds.value
+          : this.exitBufferSeconds,
+      hysteresisMargin: data.hysteresisMargin.present
+          ? data.hysteresisMargin.value
+          : this.hysteresisMargin,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GlobalSetting(')
+          ..write('id: $id, ')
+          ..write('gpsAccuracyThreshold: $gpsAccuracyThreshold, ')
+          ..write('entryBufferSeconds: $entryBufferSeconds, ')
+          ..write('exitBufferSeconds: $exitBufferSeconds, ')
+          ..write('hysteresisMargin: $hysteresisMargin')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, gpsAccuracyThreshold, entryBufferSeconds,
+      exitBufferSeconds, hysteresisMargin);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GlobalSetting &&
+          other.id == this.id &&
+          other.gpsAccuracyThreshold == this.gpsAccuracyThreshold &&
+          other.entryBufferSeconds == this.entryBufferSeconds &&
+          other.exitBufferSeconds == this.exitBufferSeconds &&
+          other.hysteresisMargin == this.hysteresisMargin);
+}
+
+class GlobalSettingsCompanion extends UpdateCompanion<GlobalSetting> {
+  final Value<int> id;
+  final Value<int> gpsAccuracyThreshold;
+  final Value<int> entryBufferSeconds;
+  final Value<int> exitBufferSeconds;
+  final Value<int> hysteresisMargin;
+  const GlobalSettingsCompanion({
+    this.id = const Value.absent(),
+    this.gpsAccuracyThreshold = const Value.absent(),
+    this.entryBufferSeconds = const Value.absent(),
+    this.exitBufferSeconds = const Value.absent(),
+    this.hysteresisMargin = const Value.absent(),
+  });
+  GlobalSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.gpsAccuracyThreshold = const Value.absent(),
+    this.entryBufferSeconds = const Value.absent(),
+    this.exitBufferSeconds = const Value.absent(),
+    this.hysteresisMargin = const Value.absent(),
+  });
+  static Insertable<GlobalSetting> custom({
+    Expression<int>? id,
+    Expression<int>? gpsAccuracyThreshold,
+    Expression<int>? entryBufferSeconds,
+    Expression<int>? exitBufferSeconds,
+    Expression<int>? hysteresisMargin,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (gpsAccuracyThreshold != null)
+        'gps_accuracy_threshold': gpsAccuracyThreshold,
+      if (entryBufferSeconds != null)
+        'entry_buffer_seconds': entryBufferSeconds,
+      if (exitBufferSeconds != null) 'exit_buffer_seconds': exitBufferSeconds,
+      if (hysteresisMargin != null) 'hysteresis_margin': hysteresisMargin,
+    });
+  }
+
+  GlobalSettingsCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? gpsAccuracyThreshold,
+      Value<int>? entryBufferSeconds,
+      Value<int>? exitBufferSeconds,
+      Value<int>? hysteresisMargin}) {
+    return GlobalSettingsCompanion(
+      id: id ?? this.id,
+      gpsAccuracyThreshold: gpsAccuracyThreshold ?? this.gpsAccuracyThreshold,
+      entryBufferSeconds: entryBufferSeconds ?? this.entryBufferSeconds,
+      exitBufferSeconds: exitBufferSeconds ?? this.exitBufferSeconds,
+      hysteresisMargin: hysteresisMargin ?? this.hysteresisMargin,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (gpsAccuracyThreshold.present) {
+      map['gps_accuracy_threshold'] = Variable<int>(gpsAccuracyThreshold.value);
+    }
+    if (entryBufferSeconds.present) {
+      map['entry_buffer_seconds'] = Variable<int>(entryBufferSeconds.value);
+    }
+    if (exitBufferSeconds.present) {
+      map['exit_buffer_seconds'] = Variable<int>(exitBufferSeconds.value);
+    }
+    if (hysteresisMargin.present) {
+      map['hysteresis_margin'] = Variable<int>(hysteresisMargin.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GlobalSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('gpsAccuracyThreshold: $gpsAccuracyThreshold, ')
+          ..write('entryBufferSeconds: $entryBufferSeconds, ')
+          ..write('exitBufferSeconds: $exitBufferSeconds, ')
+          ..write('hysteresisMargin: $hysteresisMargin')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $UsersTable users = $UsersTable(this);
   late final $AttractionsTable attractions = $AttractionsTable(this);
   late final $MeasurementsTable measurements = $MeasurementsTable(this);
+  late final $SurveysTable surveys = $SurveysTable(this);
+  late final $GlobalSettingsTable globalSettings = $GlobalSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [users, attractions, measurements];
+      [users, attractions, measurements, surveys, globalSettings];
 }
 
 typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
@@ -2044,6 +2921,440 @@ typedef $$MeasurementsTableProcessedTableManager = ProcessedTableManager<
     (Measurement, $$MeasurementsTableReferences),
     Measurement,
     PrefetchHooks Function({bool operatorId, bool attractionId})>;
+typedef $$SurveysTableCreateCompanionBuilder = SurveysCompanion Function({
+  required String id,
+  required String operatorId,
+  required DateTime createdAt,
+  required int rating,
+  required String strengths,
+  required String improvements,
+  required int recommendRating,
+  required String source,
+  Value<String?> sourceOther,
+  Value<String?> notes,
+  Value<String> syncStatus,
+  Value<int> rowid,
+});
+typedef $$SurveysTableUpdateCompanionBuilder = SurveysCompanion Function({
+  Value<String> id,
+  Value<String> operatorId,
+  Value<DateTime> createdAt,
+  Value<int> rating,
+  Value<String> strengths,
+  Value<String> improvements,
+  Value<int> recommendRating,
+  Value<String> source,
+  Value<String?> sourceOther,
+  Value<String?> notes,
+  Value<String> syncStatus,
+  Value<int> rowid,
+});
+
+class $$SurveysTableFilterComposer
+    extends Composer<_$AppDatabase, $SurveysTable> {
+  $$SurveysTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get operatorId => $composableBuilder(
+      column: $table.operatorId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get rating => $composableBuilder(
+      column: $table.rating, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get strengths => $composableBuilder(
+      column: $table.strengths, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get improvements => $composableBuilder(
+      column: $table.improvements, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get recommendRating => $composableBuilder(
+      column: $table.recommendRating,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sourceOther => $composableBuilder(
+      column: $table.sourceOther, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
+}
+
+class $$SurveysTableOrderingComposer
+    extends Composer<_$AppDatabase, $SurveysTable> {
+  $$SurveysTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get operatorId => $composableBuilder(
+      column: $table.operatorId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get rating => $composableBuilder(
+      column: $table.rating, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get strengths => $composableBuilder(
+      column: $table.strengths, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get improvements => $composableBuilder(
+      column: $table.improvements,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get recommendRating => $composableBuilder(
+      column: $table.recommendRating,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sourceOther => $composableBuilder(
+      column: $table.sourceOther, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SurveysTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SurveysTable> {
+  $$SurveysTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get operatorId => $composableBuilder(
+      column: $table.operatorId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get rating =>
+      $composableBuilder(column: $table.rating, builder: (column) => column);
+
+  GeneratedColumn<String> get strengths =>
+      $composableBuilder(column: $table.strengths, builder: (column) => column);
+
+  GeneratedColumn<String> get improvements => $composableBuilder(
+      column: $table.improvements, builder: (column) => column);
+
+  GeneratedColumn<int> get recommendRating => $composableBuilder(
+      column: $table.recommendRating, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceOther => $composableBuilder(
+      column: $table.sourceOther, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
+}
+
+class $$SurveysTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SurveysTable,
+    Survey,
+    $$SurveysTableFilterComposer,
+    $$SurveysTableOrderingComposer,
+    $$SurveysTableAnnotationComposer,
+    $$SurveysTableCreateCompanionBuilder,
+    $$SurveysTableUpdateCompanionBuilder,
+    (Survey, BaseReferences<_$AppDatabase, $SurveysTable, Survey>),
+    Survey,
+    PrefetchHooks Function()> {
+  $$SurveysTableTableManager(_$AppDatabase db, $SurveysTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SurveysTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SurveysTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SurveysTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> operatorId = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rating = const Value.absent(),
+            Value<String> strengths = const Value.absent(),
+            Value<String> improvements = const Value.absent(),
+            Value<int> recommendRating = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<String?> sourceOther = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SurveysCompanion(
+            id: id,
+            operatorId: operatorId,
+            createdAt: createdAt,
+            rating: rating,
+            strengths: strengths,
+            improvements: improvements,
+            recommendRating: recommendRating,
+            source: source,
+            sourceOther: sourceOther,
+            notes: notes,
+            syncStatus: syncStatus,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String operatorId,
+            required DateTime createdAt,
+            required int rating,
+            required String strengths,
+            required String improvements,
+            required int recommendRating,
+            required String source,
+            Value<String?> sourceOther = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SurveysCompanion.insert(
+            id: id,
+            operatorId: operatorId,
+            createdAt: createdAt,
+            rating: rating,
+            strengths: strengths,
+            improvements: improvements,
+            recommendRating: recommendRating,
+            source: source,
+            sourceOther: sourceOther,
+            notes: notes,
+            syncStatus: syncStatus,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SurveysTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SurveysTable,
+    Survey,
+    $$SurveysTableFilterComposer,
+    $$SurveysTableOrderingComposer,
+    $$SurveysTableAnnotationComposer,
+    $$SurveysTableCreateCompanionBuilder,
+    $$SurveysTableUpdateCompanionBuilder,
+    (Survey, BaseReferences<_$AppDatabase, $SurveysTable, Survey>),
+    Survey,
+    PrefetchHooks Function()>;
+typedef $$GlobalSettingsTableCreateCompanionBuilder = GlobalSettingsCompanion
+    Function({
+  Value<int> id,
+  Value<int> gpsAccuracyThreshold,
+  Value<int> entryBufferSeconds,
+  Value<int> exitBufferSeconds,
+  Value<int> hysteresisMargin,
+});
+typedef $$GlobalSettingsTableUpdateCompanionBuilder = GlobalSettingsCompanion
+    Function({
+  Value<int> id,
+  Value<int> gpsAccuracyThreshold,
+  Value<int> entryBufferSeconds,
+  Value<int> exitBufferSeconds,
+  Value<int> hysteresisMargin,
+});
+
+class $$GlobalSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $GlobalSettingsTable> {
+  $$GlobalSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get gpsAccuracyThreshold => $composableBuilder(
+      column: $table.gpsAccuracyThreshold,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get entryBufferSeconds => $composableBuilder(
+      column: $table.entryBufferSeconds,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get exitBufferSeconds => $composableBuilder(
+      column: $table.exitBufferSeconds,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get hysteresisMargin => $composableBuilder(
+      column: $table.hysteresisMargin,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$GlobalSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GlobalSettingsTable> {
+  $$GlobalSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get gpsAccuracyThreshold => $composableBuilder(
+      column: $table.gpsAccuracyThreshold,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get entryBufferSeconds => $composableBuilder(
+      column: $table.entryBufferSeconds,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get exitBufferSeconds => $composableBuilder(
+      column: $table.exitBufferSeconds,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get hysteresisMargin => $composableBuilder(
+      column: $table.hysteresisMargin,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$GlobalSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GlobalSettingsTable> {
+  $$GlobalSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get gpsAccuracyThreshold => $composableBuilder(
+      column: $table.gpsAccuracyThreshold, builder: (column) => column);
+
+  GeneratedColumn<int> get entryBufferSeconds => $composableBuilder(
+      column: $table.entryBufferSeconds, builder: (column) => column);
+
+  GeneratedColumn<int> get exitBufferSeconds => $composableBuilder(
+      column: $table.exitBufferSeconds, builder: (column) => column);
+
+  GeneratedColumn<int> get hysteresisMargin => $composableBuilder(
+      column: $table.hysteresisMargin, builder: (column) => column);
+}
+
+class $$GlobalSettingsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GlobalSettingsTable,
+    GlobalSetting,
+    $$GlobalSettingsTableFilterComposer,
+    $$GlobalSettingsTableOrderingComposer,
+    $$GlobalSettingsTableAnnotationComposer,
+    $$GlobalSettingsTableCreateCompanionBuilder,
+    $$GlobalSettingsTableUpdateCompanionBuilder,
+    (
+      GlobalSetting,
+      BaseReferences<_$AppDatabase, $GlobalSettingsTable, GlobalSetting>
+    ),
+    GlobalSetting,
+    PrefetchHooks Function()> {
+  $$GlobalSettingsTableTableManager(
+      _$AppDatabase db, $GlobalSettingsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GlobalSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GlobalSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GlobalSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> gpsAccuracyThreshold = const Value.absent(),
+            Value<int> entryBufferSeconds = const Value.absent(),
+            Value<int> exitBufferSeconds = const Value.absent(),
+            Value<int> hysteresisMargin = const Value.absent(),
+          }) =>
+              GlobalSettingsCompanion(
+            id: id,
+            gpsAccuracyThreshold: gpsAccuracyThreshold,
+            entryBufferSeconds: entryBufferSeconds,
+            exitBufferSeconds: exitBufferSeconds,
+            hysteresisMargin: hysteresisMargin,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> gpsAccuracyThreshold = const Value.absent(),
+            Value<int> entryBufferSeconds = const Value.absent(),
+            Value<int> exitBufferSeconds = const Value.absent(),
+            Value<int> hysteresisMargin = const Value.absent(),
+          }) =>
+              GlobalSettingsCompanion.insert(
+            id: id,
+            gpsAccuracyThreshold: gpsAccuracyThreshold,
+            entryBufferSeconds: entryBufferSeconds,
+            exitBufferSeconds: exitBufferSeconds,
+            hysteresisMargin: hysteresisMargin,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$GlobalSettingsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GlobalSettingsTable,
+    GlobalSetting,
+    $$GlobalSettingsTableFilterComposer,
+    $$GlobalSettingsTableOrderingComposer,
+    $$GlobalSettingsTableAnnotationComposer,
+    $$GlobalSettingsTableCreateCompanionBuilder,
+    $$GlobalSettingsTableUpdateCompanionBuilder,
+    (
+      GlobalSetting,
+      BaseReferences<_$AppDatabase, $GlobalSettingsTable, GlobalSetting>
+    ),
+    GlobalSetting,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2054,4 +3365,8 @@ class $AppDatabaseManager {
       $$AttractionsTableTableManager(_db, _db.attractions);
   $$MeasurementsTableTableManager get measurements =>
       $$MeasurementsTableTableManager(_db, _db.measurements);
+  $$SurveysTableTableManager get surveys =>
+      $$SurveysTableTableManager(_db, _db.surveys);
+  $$GlobalSettingsTableTableManager get globalSettings =>
+      $$GlobalSettingsTableTableManager(_db, _db.globalSettings);
 }

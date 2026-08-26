@@ -26,7 +26,7 @@ class _WorkScreenState extends State<WorkScreen> {
     final db = Provider.of<AppDatabase>(context, listen: false);
     final auth = Provider.of<AuthService>(context, listen: false);
     
-    final id = Uuid().v4();
+    final id = const Uuid().v4();
     final now = DateTime.now().toUtc();
 
     await db.into(db.measurements).insert(
@@ -69,6 +69,7 @@ class _WorkScreenState extends State<WorkScreen> {
       _currentMeasurementId = null;
     });
 
+    if (!mounted) return;
     // Po zakończeniu automatycznie spróbuj zsynchronizować z serwerem
     Provider.of<SyncService>(context, listen: false).syncMeasurements();
 

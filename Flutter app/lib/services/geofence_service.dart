@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:uuid/uuid.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:ntp/ntp.dart';
 import '../database/database.dart';
 import 'auth_service.dart';
 import 'notification_service.dart';
+
+import 'package:flutter/foundation.dart'; // dla defaultTargetPlatform
 
 class GeofenceService extends ChangeNotifier {
   final AppDatabase _db;
@@ -23,6 +27,11 @@ class GeofenceService extends ChangeNotifier {
 
   GeofenceService(this._db, this._authService);
 
+  Timer? _fallbackTimer;
+  Timer? _exitBufferTimer;
+  Timer? _entryBufferTimer;
+  String? _pendingEntryAttractionId;
+
   void startGeofencing() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
@@ -33,35 +42,80 @@ class GeofenceService extends ChangeNotifier {
       if (permission == LocationPermission.denied) return;
     }
 
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: AndroidSettings(
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      if (await Permission.ignoreBatteryOptimizations.isDenied) {
+        await Permission.ignoreBatteryOptimizations.request();
+      }
+    }
+
+    late LocationSettings locationSettings;
+    
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 2, // aktualizacja co 2 metry
-        forceLocationManager: true,
+        distanceFilter: 0, // 0 = Zgłaszaj każdy ruch / czas
+        intervalDuration: const Duration(seconds: 5), // Częste odświeżanie
         foregroundNotificationConfig: const ForegroundNotificationConfig(
-          notificationText: "Monitorowanie wejść i wyjść ze stref w tle.",
-          notificationTitle: "Śledzenie Stref Aktywne",
+          notificationText: "Śledzenie aktywności w terenie...",
+          notificationTitle: "Geofence Pracuje",
           enableWakeLock: true,
         ),
-      ),
+      );
+    } else {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+      );
+    }
+
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
     ).listen((Position position) {
       _processLocation(position);
     });
+    
+    // Zabezpieczenie na wypadek uśpienia strumienia przez Android
+    _fallbackTimer?.cancel();
+    _fallbackTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      forceLocationCheck();
+    });
+
+    // Wymuszenie natychmiastowego sprawdzenia stref
+    forceLocationCheck();
   }
 
   void stopGeofencing() {
     _positionStream?.cancel();
     _positionStream = null;
+    _fallbackTimer?.cancel();
+    _fallbackTimer = null;
+    _exitBufferTimer?.cancel();
+    _exitBufferTimer = null;
+    _entryBufferTimer?.cancel();
+    _entryBufferTimer = null;
+    _pendingEntryAttractionId = null;
   }
 
   Future<void> _processLocation(Position position) async {
     if (!_authService.isAuthenticated) return;
 
+    // 1. Pobranie globalnych ustawień konfiguracyjnych (z opóźnieniem domyślnym)
+    final settingsList = await _db.select(_db.globalSettings).get();
+    final settings = settingsList.isNotEmpty ? settingsList.first : const GlobalSetting(
+        id: 1, gpsAccuracyThreshold: 50, entryBufferSeconds: 4, exitBufferSeconds: 45, hysteresisMargin: 10
+    );
+
+    // 2. Accuracy Filter (Odrzucanie anomalii np. z masztów GSM)
+    if (position.accuracy > settings.gpsAccuracyThreshold) {
+      debugPrint("Zignorowano pozycję: dokładność ${position.accuracy}m jest gorsza niż próg ${settings.gpsAccuracyThreshold}m.");
+      return;
+    }
+
     final allAttractions = await _db.select(_db.attractions).get();
     final attractions = allAttractions.where((a) => a.isActive).toList();
     
-    Attraction? closestAttraction;
-    double minDistance = double.infinity;
+    Attraction? bestAttraction;
+    double bestRelativeDepth = double.infinity;
 
     for (var attraction in attractions) {
       if (!attraction.isActive) continue;
@@ -71,29 +125,71 @@ class GeofenceService extends ChangeNotifier {
         attraction.latitude, attraction.longitude,
       );
 
-      // Margines 5 metrów jak prosił użytkownik
-      double triggerRadius = attraction.radius + 5.0;
+      bool isCurrentlyActive = _currentActiveAttractionId == attraction.id;
+      
+      // 3. Histereza - Strefa wyjścia jest powiększona o margines dla obecnej strefy
+      double triggerRadius = attraction.radius + (isCurrentlyActive ? settings.hysteresisMargin : 0);
 
-      if (distance <= triggerRadius && distance < minDistance) {
-        minDistance = distance;
-        closestAttraction = attraction;
+      if (distance <= triggerRadius) {
+        // 4. Priorytetyzacja Głębi (Relative Depth Priority)
+        // Jeśli strefy się nakładają, faworyzujemy tę, w której jesteśmy najgłębiej
+        double relativeDepth = distance - attraction.radius;
+        if (relativeDepth < bestRelativeDepth) {
+          bestRelativeDepth = relativeDepth;
+          bestAttraction = attraction;
+        }
       }
     }
 
-    if (closestAttraction != null) {
-      // Jesteśmy w zasięgu jakiejś atrakcji
-      if (_currentActiveAttractionId != closestAttraction.id) {
-        // Zmieniliśmy strefę! Albo weszliśmy z zewnątrz.
-        if (_currentActiveAttractionId != null) {
-          await stopCurrentMeasurement(); // Zakończ poprzedni
+    if (bestAttraction != null) {
+      // Jesteśmy w zasięgu atrakcji. Anulujemy ewentualne odliczanie wyjścia.
+      _exitBufferTimer?.cancel();
+      _exitBufferTimer = null;
+      
+      if (_currentActiveAttractionId != bestAttraction.id) {
+        // Weszliśmy w nową strefę (lub przenieśliśmy się do głębszej)
+        if (_pendingEntryAttractionId != bestAttraction.id) {
+          _pendingEntryAttractionId = bestAttraction.id;
+          
+          _entryBufferTimer?.cancel();
+          _entryBufferTimer = Timer(Duration(seconds: settings.entryBufferSeconds), () async {
+            // Po odczekaniu bufora wejścia ostatecznie przełączamy strefę
+            if (_currentActiveAttractionId != null) {
+              await stopCurrentMeasurement(); // Zakończ poprzedni bezzwłocznie
+            }
+            await _handleZoneEntry(bestAttraction!);
+            _pendingEntryAttractionId = null;
+          });
         }
-        await _handleZoneEntry(closestAttraction);
+      } else {
+        // Jesteśmy wciąż w naszej aktywnej strefie, anulujemy wszelkie próby przejęcia przez inne poboczne strefy
+        _pendingEntryAttractionId = null;
+        _entryBufferTimer?.cancel();
       }
     } else {
       // Wyszliśmy ze wszystkich stref
-      if (_currentActiveAttractionId != null) {
-        await stopCurrentMeasurement();
+      _pendingEntryAttractionId = null;
+      _entryBufferTimer?.cancel();
+
+      if (_currentActiveAttractionId != null && _exitBufferTimer == null) {
+        // 5. Bufor Wyjścia (Exit Buffer / GPS Drift protection)
+        _exitBufferTimer = Timer(Duration(seconds: settings.exitBufferSeconds), () async {
+          await stopCurrentMeasurement();
+          _exitBufferTimer = null;
+        });
       }
+    }
+  }
+
+  // Wymusza jednorazowe sprawdzenie strefy (np. zaraz po zsynchronizowaniu nowych atrakcji)
+  Future<void> forceLocationCheck() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      await _processLocation(position);
+    } catch (e) {
+      print("Błąd pobierania wymuszonej lokalizacji: $e");
     }
   }
 
@@ -119,12 +215,21 @@ class GeofenceService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<DateTime> _getPreciseTime() async {
+    try {
+      // Szybki timeout 2 sekundy - jeśli jesteśmy głęboko w lesie bez zasięgu, natychmiast wraca do czasu systemowego
+      return await NTP.now(timeout: const Duration(seconds: 2));
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
   // Funkcja używana przez UI dla Admina do manualnego startu
   Future<void> startMeasurementManually() async {
     if (_currentActiveAttractionId == null) return;
     
     _currentMeasurementId = const Uuid().v4();
-    _currentMeasurementStartTime = DateTime.now();
+    _currentMeasurementStartTime = await _getPreciseTime();
     _isMeasurementActive = true;
 
     await _db.into(_db.measurements).insert(
@@ -159,7 +264,7 @@ class GeofenceService extends ChangeNotifier {
           .getSingleOrNull();
 
       if (measurement != null) {
-        final stopTime = DateTime.now();
+        final stopTime = await _getPreciseTime();
         final duration = stopTime.difference(measurement.startTime).inSeconds;
 
         await (_db.update(_db.measurements)..where((t) => t.id.equals(_currentMeasurementId!)))

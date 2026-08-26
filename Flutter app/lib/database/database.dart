@@ -8,12 +8,28 @@ import 'schema.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [Users, Attractions, Measurements])
+@DriftDatabase(tables: [Users, Attractions, Measurements, Surveys, GlobalSettings])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  
+  // Zwraca strumień aktywnych atrakcji, opcjonalnie filtrując je po tytule prosto w bazie SQL (bardzo szybkie)
+  Stream<List<Attraction>> watchActiveAttractions(String query) {
+    if (query.isEmpty) {
+      return (select(attractions)..where((a) => a.isActive.equals(true))).watch();
+    } else {
+      return (select(attractions)
+            ..where((a) =>
+                a.isActive.equals(true) &
+                a.name.like('%$query%')))
+          .watch();
+    }
+  }
+
+  // Konstruktor dla testów w pamięci RAM
+  AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -29,6 +45,22 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(users, users.passwordHash);
           await m.addColumn(users, users.pinHash);
           await m.addColumn(users, users.role);
+        }
+        if (from < 4) {
+          await m.createTable(surveys);
+        }
+        if (from < 5) {
+          await m.createTable(globalSettings);
+          await into(globalSettings).insert(const GlobalSettingsCompanion(
+            id: Value(1),
+          ), mode: InsertMode.insertOrIgnore);
+        }
+      },
+      beforeOpen: (details) async {
+        if (details.wasCreated) {
+          await into(globalSettings).insert(const GlobalSettingsCompanion(
+            id: Value(1),
+          ), mode: InsertMode.insertOrIgnore);
         }
       },
     );
