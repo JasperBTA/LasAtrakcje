@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import '../services/geofence_service.dart';
 import '../services/update_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shorebird_code_push/shorebird_code_push.dart' as package_shorebird;
 import 'attractions_screen.dart';
 import 'surveyor_screen.dart';
 
@@ -31,8 +32,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _initVersionInfo() async {
     final info = await PackageInfo.fromPlatform();
+    String baseVersion = info.version;
+    String patchDisplay = "";
+    
+    try {
+      final shorebird = package_shorebird.ShorebirdCodePush();
+      final patchNumber = await shorebird.currentPatchNumber();
+      if (patchNumber != null) {
+        patchDisplay = " SP $patchNumber";
+      }
+    } catch (e) {}
+
     setState(() {
-      _version = info.version;
+      _version = "$baseVersion$patchDisplay";
     });
   }
 
