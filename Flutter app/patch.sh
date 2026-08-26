@@ -8,7 +8,7 @@ echo "Ta komenda wyśle bezprzewodową aktualizację dla wersji widocznej obecni
 echo ""
 
 # Uruchomienie łatki
-../.shorebird/bin/shorebird patch android
+/d/Las/.shorebird/bin/shorebird patch android
 
 echo ""
 echo "✅ Gotowe! Jeśli wszystko poszło dobrze, łatka poleciała w chmurę."
