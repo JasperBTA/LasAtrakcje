@@ -29,7 +29,6 @@ dependencies:
   ntp: ^2.0.0
 
 dev_dependencies:
-  shorebird_code_push: ^2.0.7
   flutter_test:
     sdk: flutter
   integration_test:
