@@ -32,7 +32,6 @@ android {
 
     packaging {
         jniLibs {
-            keepDebugSymbols.add("**/*.so")
         }
     }
 
@@ -59,9 +58,8 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
-
 tasks.whenTaskAdded {
-    if (name.contains("stripReleaseDebugSymbols")) {
+    if (name.contains("checkReleaseAarMetadata")) {
         enabled = false
     }
 }
