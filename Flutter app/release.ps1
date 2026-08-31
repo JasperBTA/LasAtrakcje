@@ -24,6 +24,5 @@ Write-Host "Podbijam wersje do: version: $newVersion" -ForegroundColor Green
 $content = $content -replace "^version:.*", "version: $newVersion"
 $content | Set-Content $pubspecPath
 
-Write-Host "Wersja zapisana. Uruchamiam D:\Las\.shorebird\bin\shorebird release android..." -ForegroundColor Cyan
-D:\Las\.shorebird\bin\shorebird release android
-
+Write-Host "Wersja zapisana. Uruchamiam D:\Las\.shorebird\bin\shorebird.ps1 release android --flutter-version=3.47.1..." -ForegroundColor Cyan
+& "D:\Las\.shorebird\bin\shorebird.ps1" release android --flutter-version=3.47.1
