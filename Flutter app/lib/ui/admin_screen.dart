@@ -659,6 +659,8 @@ class __UsersManagementTabState extends State<_UsersManagementTab> {
   }
 
   void _editUser(dynamic user) {
+    final _firstNameCtrl = TextEditingController(text: user['firstName'] ?? '');
+    final _lastNameCtrl = TextEditingController(text: user['lastName'] ?? '');
     final _passwordCtrl = TextEditingController();
     final _pinCtrl = TextEditingController();
     String _role = user['role'] ?? 'WORKER';
@@ -675,6 +677,10 @@ class __UsersManagementTabState extends State<_UsersManagementTab> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Pozostaw puste, jeśli nie chcesz zmieniać.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  const SizedBox(height: 16),
+                  TextField(controller: _firstNameCtrl, decoration: const InputDecoration(labelText: 'Imię')),
+                  const SizedBox(height: 16),
+                  TextField(controller: _lastNameCtrl, decoration: const InputDecoration(labelText: 'Nazwisko')),
                   const SizedBox(height: 16),
                   TextField(controller: _passwordCtrl, decoration: const InputDecoration(labelText: 'Nowe Hasło'), obscureText: true),
                   const SizedBox(height: 16),
@@ -717,6 +723,8 @@ class __UsersManagementTabState extends State<_UsersManagementTab> {
                       try {
                         final apiClient = ApiClient();
                         final response = await apiClient.put('/admin/users/${user['id']}', {
+                          'firstName': _firstNameCtrl.text.trim(),
+                          'lastName': _lastNameCtrl.text.trim(),
                           'password': _passwordCtrl.text.trim(),
                           'pin': _pinCtrl.text.trim(),
                           'role': _role,
@@ -818,6 +826,8 @@ class _AddUserForm extends StatefulWidget {
 }
 
 class __AddUserFormState extends State<_AddUserForm> {
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _pinController = TextEditingController();
@@ -836,6 +846,8 @@ class __AddUserFormState extends State<_AddUserForm> {
     try {
       final apiClient = ApiClient();
       final response = await apiClient.post('/admin/users', {
+        'firstName': _firstNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
         'username': _usernameController.text.trim(),
         'password': _passwordController.text.trim(),
         'pin': _pinController.text.trim(),
@@ -865,6 +877,14 @@ class __AddUserFormState extends State<_AddUserForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text('Dodaj nowego pracownika', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: TextField(controller: _firstNameController, decoration: const InputDecoration(labelText: 'Imię'))),
+              const SizedBox(width: 16),
+              Expanded(child: TextField(controller: _lastNameController, decoration: const InputDecoration(labelText: 'Nazwisko'))),
+            ],
+          ),
           const SizedBox(height: 16),
           TextField(controller: _usernameController, decoration: const InputDecoration(labelText: 'Nazwa użytkownika')),
           const SizedBox(height: 16),

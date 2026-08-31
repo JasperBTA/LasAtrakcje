@@ -40,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
       final patch = await shorebird.readCurrentPatch();
       if (patch != null) {
         patchDisplay = " SP-${patch.number}";
-      }
     } catch (e) {}
 
     setState(() {
