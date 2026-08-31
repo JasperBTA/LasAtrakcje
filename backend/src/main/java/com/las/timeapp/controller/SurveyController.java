@@ -83,4 +83,9 @@ public class SurveyController {
 
         return ResponseEntity.ok(Map.of("message", "Synced " + syncedCount + " surveys."));
     }
+
+    @GetMapping
+    public ResponseEntity<List<Survey>> getSurveys() {
+        return ResponseEntity.ok(surveyRepository.findAll());
+    }
 }

@@ -52,6 +52,13 @@ public class AdminController {
         if (request.getPin() != null && !request.getPin().trim().isEmpty()) {
             user.setPinHash(passwordEncoder.encode(request.getPin().trim()));
         }
+        
+        if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) {
+            user.setFirstName(request.getFirstName().trim());
+        }
+        if (request.getLastName() != null && !request.getLastName().trim().isEmpty()) {
+            user.setLastName(request.getLastName().trim());
+        }
 
         user.setRole(request.getRole() != null ? request.getRole().toUpperCase() : "WORKER");
         user.setCreatedAt(OffsetDateTime.now());
@@ -109,6 +116,12 @@ public class AdminController {
         }
         if (request.getRole() != null && !request.getRole().trim().isEmpty()) {
             user.setRole(request.getRole().trim().toUpperCase());
+        }
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName().trim().isEmpty() ? null : request.getFirstName().trim());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName().trim().isEmpty() ? null : request.getLastName().trim());
         }
         userRepository.save(user);
         return ResponseEntity.ok(Map.of("status", "success"));

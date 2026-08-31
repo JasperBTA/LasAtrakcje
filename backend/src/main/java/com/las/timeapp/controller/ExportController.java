@@ -49,27 +49,33 @@ public class ExportController {
         List<Measurement> measurements = measurementRepository.findAll();
         
         // Pobieramy słowniki, aby nie eksportować brzydkich UUID
-        Map<java.util.UUID, String> userMap = userRepository.findAll().stream()
-                .collect(Collectors.toMap(User::getId, User::getUsername));
+        Map<java.util.UUID, User> userMap = userRepository.findAll().stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
                 
         Map<java.util.UUID, String> attractionMap = attractionRepository.findAll().stream()
                 .collect(Collectors.toMap(Attraction::getId, Attraction::getName));
 
         StringBuilder csvBuilder = new StringBuilder();
         // Nagłówki CSV
-        csvBuilder.append("ID_Pomiaru,Pracownik,Atrakcja,Czas_Rozpoczecia,Czas_Zakonczenia,Laczny_Czas_W_Sekundach,Status_Synchronizacji\n");
+        csvBuilder.append("ID_Pomiaru,Pracownik,Imię,Nazwisko,Atrakcja,Czas_Rozpoczecia,Czas_Zakonczenia,Laczny_Czas_W_Sekundach,Status_Synchronizacji\n");
 
         for (Measurement m : measurements) {
-            String workerName = userMap.getOrDefault(m.getOperatorId(), "Nieznany (" + m.getOperatorId() + ")");
+            User user = userMap.get(m.getOperatorId());
+            String workerName = user != null ? user.getUsername() : "Nieznany (" + m.getOperatorId() + ")";
+            String firstName = (user != null && user.getFirstName() != null) ? user.getFirstName() : "";
+            String lastName = (user != null && user.getLastName() != null) ? user.getLastName() : "";
+
             String attractionName = attractionMap.getOrDefault(m.getAttractionId(), "Nieznana (" + m.getAttractionId() + ")");
             
             String startTime = m.getStartTime() != null ? m.getStartTime().toString() : "";
             String stopTime = m.getStopTime() != null ? m.getStopTime().toString() : "";
             String duration = m.getTotalDurationSeconds() != null ? m.getTotalDurationSeconds().toString() : "";
 
-            csvBuilder.append(String.format("%s,%s,%s,%s,%s,%s,%s\n",
+            csvBuilder.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                     m.getId(),
                     workerName,
+                    firstName,
+                    lastName,
                     attractionName,
                     startTime,
                     stopTime,
@@ -132,14 +138,18 @@ public class ExportController {
 
     @GetMapping("/surveys/csv")
     public ResponseEntity<String> getSurveysCsv() {
-        StringBuilder csv = new StringBuilder("ID,Pracownik,Data,Ocena Ogólna,Mocne Strony,Do Poprawy,Skłonność do polecenia,Źródło,Inne Źródło,Uwagi\n");
+        StringBuilder csv = new StringBuilder("ID,Pracownik,Imię,Nazwisko,Data,Ocena Ogólna,Mocne Strony,Do Poprawy,Skłonność do polecenia,Źródło,Inne Źródło,Uwagi\n");
         surveyRepository.findAll().forEach(s -> {
-            String operatorName = userRepository.findById(s.getOperatorId())
-                .map(User::getUsername).orElse("Nieznany");
+            User user = userRepository.findById(s.getOperatorId()).orElse(null);
+            String operatorName = user != null ? user.getUsername() : "Nieznany";
+            String firstName = (user != null && user.getFirstName() != null) ? user.getFirstName() : "";
+            String lastName = (user != null && user.getLastName() != null) ? user.getLastName() : "";
                 
-            csv.append(String.format("%s,%s,%s,%d,\"%s\",\"%s\",%d,\"%s\",\"%s\",\"%s\"\n",
+            csv.append(String.format("%s,%s,%s,%s,%s,%d,\"%s\",\"%s\",%d,\"%s\",\"%s\",\"%s\"\n",
                 s.getId(),
                 operatorName,
+                firstName,
+                lastName,
                 s.getCreatedAt(),
                 s.getRating(),
                 (s.getStrengths() != null ? s.getStrengths().replace("\"", "\"\"") : ""),

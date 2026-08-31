@@ -32,6 +32,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+        System.out.println("DEBUG LOGIN: Próba logowania dla usera: '" + request.getUsername() + "', hasło: '" + request.getPassword() + "'");
         Optional<User> userOpt = userRepository.findByUsername(request.getUsername());
         
         if (userOpt.isPresent()) {
