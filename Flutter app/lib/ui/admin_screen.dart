@@ -431,14 +431,9 @@ class _AdminScreenState extends State<AdminScreen> {
                           icon: const Icon(Icons.edit, color: Colors.blue),
                           onPressed: () => _editAttraction(attraction, db),
                         ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.pin_drop),
-                          label: const Text('Zapisz GPS'),
+                        IconButton(
+                          icon: const Icon(Icons.pin_drop, color: Colors.green),
                           onPressed: () => _updateLocation(attraction, db),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepOrange,
-                            foregroundColor: Colors.white,
-                          ),
                         ),
                       ],
                     ),
