@@ -288,8 +288,8 @@ class _AdminScreenState extends State<AdminScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.explore),
-                  label: const Text('Sprawdź moją aktualną pozycję na mapie', style: TextStyle(fontSize: 16)),
+                  icon: const Icon(Icons.map),
+                  label: const Text('Moja pozycja na mapie', style: TextStyle(fontSize: 16)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1B8B39), // Logo Green
                     foregroundColor: Colors.white,
@@ -305,7 +305,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.radar),
-                  label: const Text('Otwórz Radar Offline', style: TextStyle(fontSize: 16)),
+                  label: const Text('Otwórz radar', style: TextStyle(fontSize: 16)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFEF6C20), // Logo Orange
                     foregroundColor: Colors.white,
@@ -319,7 +319,7 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.settings_input_component, color: Colors.orange),
-              title: const Text('Zarządzanie Czułością Aplikacji (Geofencing)'),
+              title: const Text('Kalibracja'),
               subtitle: const Text('Ustawienia globalne filtrów GPS i buforów czasu'),
               trailing: ElevatedButton(
                 onPressed: () => _showGlobalSettingsDialog(context, db),
@@ -381,7 +381,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   return ListTile(
                     title: Text(attraction.name),
                     subtitle: Text(
-                      isPending ? 'Oczekuje na synchronizację' : (attraction.isActive ? 'Zgrane z serwerem' : 'Nieaktywna'),
+                      isPending ? 'Oczekuje na synchronizację' : (attraction.isActive ? 'Zsynchronizowane' : 'Nieaktywna'),
                       style: TextStyle(color: isPending ? Colors.red : (attraction.isActive ? Colors.green : Colors.grey)),
                     ),
                     trailing: Row(
@@ -1003,9 +1003,9 @@ class __AddAttractionFormState extends State<_AddAttractionForm> {
         children: [
           const Text('Dodaj nową atrakcję na mapie', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nazwa Atrakcji (np. Stary Dąb)')),
+          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nazwa atrakcji')),
           const SizedBox(height: 16),
-          TextField(controller: _radiusController, decoration: const InputDecoration(labelText: 'Promień wykrywania (w metrach)'), keyboardType: TextInputType.number),
+          TextField(controller: _radiusController, decoration: const InputDecoration(labelText: 'Promień wykrywania (metry)'), keyboardType: TextInputType.number),
           const SizedBox(height: 32),
           _isLoading ? const Center(child: CircularProgressIndicator()) : ElevatedButton.icon(
             icon: const Icon(Icons.my_location),
