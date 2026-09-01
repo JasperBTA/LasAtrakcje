@@ -98,6 +98,13 @@ class SyncService extends ChangeNotifier {
               )).toList(),
             );
           });
+
+          // Usuń z bazy lokalnej wszystkie zsynchronizowane atrakcje, których już nie ma na serwerze (np. usunięte duplikaty)
+          final serverIds = decoded.map<String>((item) => (item['id'] ?? '').toString()).toList();
+          await (_database.delete(_database.attractions)
+                ..where((t) => t.id.isNotIn(serverIds) & t.syncStatus.equals('SYNCED')))
+              .go();
+              
           final sqlTime = stopwatch.elapsedMilliseconds;
           return "Pobrano atrakcje (HTTP: ${httpTime}ms, SQL: ${sqlTime}ms)";
         } else {
