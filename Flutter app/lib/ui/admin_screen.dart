@@ -288,7 +288,7 @@ class _AdminScreenState extends State<AdminScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.map),
+                  icon: const Icon(Icons.explore),
                   label: const Text('Moja pozycja na mapie', style: TextStyle(fontSize: 16)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1B8B39), // Logo Green
