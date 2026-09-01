@@ -69,7 +69,18 @@ public class AdminController {
 
     @PostMapping("/attractions")
     public ResponseEntity<?> createAttraction(@RequestBody AttractionCreateRequest request) {
+        if (request.getId() != null) {
+            Optional<Attraction> existing = attractionRepository.findById(request.getId());
+            if (existing.isPresent()) {
+                // Idempotency: already exists, return success
+                return ResponseEntity.ok(Map.of("status", "success", "attractionId", existing.get().getId()));
+            }
+        }
+        
         Attraction attraction = new Attraction();
+        if (request.getId() != null) {
+            attraction.setId(request.getId());
+        }
         attraction.setName(request.getName());
         attraction.setLatitude(request.getLatitude());
         attraction.setLongitude(request.getLongitude());
