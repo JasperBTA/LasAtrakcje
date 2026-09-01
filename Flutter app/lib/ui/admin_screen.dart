@@ -969,6 +969,7 @@ class __AddAttractionFormState extends State<_AddAttractionForm> {
       try {
         final apiClient = ApiClient();
         final response = await apiClient.post('/admin/attractions', {
+          'id': newId,
           'name': _nameController.text.trim(),
           'latitude': position.latitude,
           'longitude': position.longitude,

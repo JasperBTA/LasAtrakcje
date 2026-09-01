@@ -211,6 +211,7 @@ class SyncService extends ChangeNotifier {
 
       for (var a in newAttractions) {
         final payload = {
+          'id': a.id,
           'name': a.name,
           'latitude': a.latitude,
           'longitude': a.longitude,
@@ -219,8 +220,10 @@ class SyncService extends ChangeNotifier {
         final response = await _apiClient.post('/admin/attractions', payload);
         
         if (response.statusCode == 200) {
-          // Usuwamy tymczasowy lokalny rekord, zaraz i tak zostanie pobrany z bazy z nowym UUID z serwera
-          await (_database.delete(_database.attractions)..where((t) => t.id.equals(a.id))).go();
+          // Idempotency: the server either created it or ignored the duplicate.
+          // Update the local record to SYNCED.
+          await (_database.update(_database.attractions)..where((t) => t.id.equals(a.id)))
+              .write(const AttractionsCompanion(syncStatus: drift.Value('SYNCED')));
         }
       }
     } catch (e) {
