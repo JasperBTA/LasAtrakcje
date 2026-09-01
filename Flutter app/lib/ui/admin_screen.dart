@@ -202,6 +202,42 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
+  void _deleteAttraction(Attraction attraction, AppDatabase db) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usuń atrakcję'),
+        content: Text('Czy na pewno chcesz usunąć atrakcję "${attraction.name}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Usuń', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    if (attraction.syncStatus == 'PENDING_CREATE') {
+      // Only local, just delete it
+      await (db.delete(db.attractions)..where((t) => t.id.equals(attraction.id))).go();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usunięto z pamięci telefonu.')));
+      return;
+    }
+
+    try {
+      final apiClient = ApiClient();
+      final response = await apiClient.delete('/admin/attractions/${attraction.id}');
+      if (response.statusCode == 200 || response.statusCode == 404) {
+        await (db.delete(db.attractions)..where((t) => t.id.equals(attraction.id))).go();
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Atrakcja usunięta.')));
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Błąd podczas usuwania.')));
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Brak internetu. Nie można usunąć z serwera.')));
+    }
+  }
+
   void _editAttraction(Attraction attraction, AppDatabase db) {
     final nameCtrl = TextEditingController(text: attraction.name);
     final radiusCtrl = TextEditingController(text: attraction.radius.toString());
@@ -387,6 +423,10 @@ class _AdminScreenState extends State<AdminScreen> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteAttraction(attraction, db),
+                        ),
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
                           onPressed: () => _editAttraction(attraction, db),
