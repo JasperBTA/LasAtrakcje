@@ -78,6 +78,7 @@ class _AttractionsScreenState extends State<AttractionsScreen> {
               builder: (ctx) => AlertDialog(
                 title: const Text('Tryb Odkrywcy 📡'),
                 content: const Text('Czy chcesz otworzyć radar sferyczny?'),
+                actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx),
                     child: const Text('Anuluj'),
