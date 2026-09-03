@@ -52,6 +52,7 @@ class _AttractionsScreenState extends State<AttractionsScreen> {
   }
 
   void _logout() async {
+    Provider.of<GeofenceService>(context, listen: false).stopGeofencing();
     await Provider.of<AuthService>(context, listen: false).logout();
     if (mounted) {
       Navigator.pushReplacement(
