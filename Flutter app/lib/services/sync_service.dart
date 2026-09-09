@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../api/api_client.dart';
@@ -12,10 +13,28 @@ class SyncService extends ChangeNotifier {
   final AuthService _authService;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   bool _isSyncing = false;
+  Timer? _autoSyncTimer;
 
   bool get isSyncing => _isSyncing;
 
-  SyncService(this._database, this._authService);
+  SyncService(this._database, this._authService) {
+    _startAutoSync();
+  }
+
+  void _startAutoSync() {
+    _autoSyncTimer?.cancel();
+    _autoSyncTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
+      if (_authService.isAuthenticated && !_isSyncing) {
+        syncAll();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoSyncTimer?.cancel();
+    super.dispose();
+  }
 
   Future<String> syncAll() async {
     if (_isSyncing) return "Synchronizacja już trwa...";

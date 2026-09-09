@@ -98,7 +98,6 @@ class GeofenceService extends ChangeNotifier {
 
   Future<void> _processLocation(Position position) async {
     if (!_authService.isAuthenticated || _authService.isSurveyor) return;
-
     // 1. Pobranie globalnych ustawień konfiguracyjnych (z opóźnieniem domyślnym)
     final settingsList = await _db.select(_db.globalSettings).get();
     final settings = settingsList.isNotEmpty ? settingsList.first : const GlobalSetting(
