@@ -8,7 +8,8 @@ export default defineConfig({
     host: true, // This enables access from local network (0.0.0.0)
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://localhost:8080',
+        secure: false,
         changeOrigin: true
       }
     }

@@ -3,12 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import DashboardLayout from './layouts/DashboardLayout';
 import MeasurementsPage from './pages/MeasurementsPage';
-
 import AttractionsPage from './pages/AttractionsPage';
-
 import SurveysPage from './pages/SurveysPage';
 import ExportPage from './pages/ExportPage';
 import SettingsPage from './pages/SettingsPage';
+import UsersPage from './pages/UsersPage';
 
 function App() {
   const [token, setTokenState] = useState(() => localStorage.getItem('jwt_token') || null);
@@ -30,7 +29,7 @@ function App() {
 
   const handleAuthError = () => {
     setToken(null);
-    showToast('Sesja wygasła. Zaloguj się ponownie.');
+    showToast('Sesja wygasla. Zaloguj sie ponownie.');
   };
 
   return (
@@ -48,6 +47,7 @@ function App() {
             <Route path="/measurements" element={<MeasurementsPage token={token} showToast={showToast} handleAuthError={handleAuthError} />} />
             <Route path="/attractions" element={<AttractionsPage token={token} showToast={showToast} handleAuthError={handleAuthError} />} />
             <Route path="/surveys" element={<SurveysPage token={token} showToast={showToast} handleAuthError={handleAuthError} />} />
+            <Route path="/users" element={<UsersPage token={token} showToast={showToast} handleAuthError={handleAuthError} />} />
             <Route path="/export" element={<ExportPage token={token} showToast={showToast} handleAuthError={handleAuthError} />} />
             <Route path="/settings" element={<SettingsPage token={token} showToast={showToast} handleAuthError={handleAuthError} />} />
           </Route>

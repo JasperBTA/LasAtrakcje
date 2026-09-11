@@ -167,24 +167,32 @@ export default function UsersPage({ token, showToast, handleAuthError }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                 <div className="form-group">
                   <label>Imię</label>
-                  <input type="text" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="np. Jan" />
+                  <input type="text" className="form-control" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="np. Jan" />
                 </div>
                 <div className="form-group">
                   <label>Nazwisko</label>
-                  <input type="text" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} placeholder="np. Kowalski" />
+                  <input type="text" className="form-control" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} placeholder="np. Kowalski" />
                 </div>
               </div>
               <div className="form-group">
                 <label>Login (Username) *</label>
-                <input type="text" value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} required placeholder="np. jkowalski" />
+                <input type="text" className="form-control" value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} required placeholder="np. jkowalski" />
               </div>
               <div className="form-group">
                 <label>Hasło *</label>
-                <input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required />
+                <input type="password" className="form-control" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required />
               </div>
               <div className="form-group">
                 <label>PIN (do szybkiego logowania pracownika)</label>
-                <input type="text" value={formData.pin} onChange={(e) => setFormData({...formData, pin: e.target.value})} placeholder="np. 1234" maxLength="4" />
+                <input type="text" className="form-control" value={formData.pin} onChange={(e) => setFormData({...formData, pin: e.target.value})} placeholder="np. 1234" maxLength="4" />
+              </div>
+              <div className="form-group">
+                <label>Rola *</label>
+                <select className="form-control" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})} required style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)', color: 'var(--text-color)' }}>
+                  <option value="WORKER">Pracownik</option>
+                  <option value="SURVEYOR">Ankieter (Tylko ankiety)</option>
+                  <option value="ADMIN">Administrator</option>
+                </select>
               </div>
               
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
