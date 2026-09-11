@@ -1,3 +1,13 @@
+import 'dart:io';
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'database/database.dart';
@@ -12,6 +22,7 @@ import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = MyHttpOverrides();
   await NotificationService().init();
   
   final db = AppDatabase();

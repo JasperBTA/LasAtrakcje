@@ -6,7 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class ApiClient {
   // Adres produkcyjny VM w lesie (zmień na 10.0.2.2 dla emulatora)
   // Adres serwera LAN / Roboczego
-  static String baseUrl = 'http://192.168.151.13:8080/api';
+  static String baseUrl = 'https://192.168.151.13:8443/api';
   
   static String get mapUrl {
     return baseUrl.replaceAll('/api', '/mapa.html');
