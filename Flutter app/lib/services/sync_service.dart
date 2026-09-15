@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../api/api_client.dart';
@@ -12,10 +13,28 @@ class SyncService extends ChangeNotifier {
   final AuthService _authService;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   bool _isSyncing = false;
+  Timer? _autoSyncTimer;
 
   bool get isSyncing => _isSyncing;
 
-  SyncService(this._database, this._authService);
+  SyncService(this._database, this._authService) {
+    _startAutoSync();
+  }
+
+  void _startAutoSync() {
+    _autoSyncTimer?.cancel();
+    _autoSyncTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
+      if (_authService.isAuthenticated && !_isSyncing) {
+        syncAll();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoSyncTimer?.cancel();
+    super.dispose();
+  }
 
   Future<String> syncAll() async {
     if (_isSyncing) return "Synchronizacja już trwa...";
@@ -98,6 +117,13 @@ class SyncService extends ChangeNotifier {
               )).toList(),
             );
           });
+
+          // Usuń z bazy lokalnej wszystkie zsynchronizowane atrakcje, których już nie ma na serwerze (np. usunięte duplikaty)
+          final serverIds = decoded.map<String>((item) => (item['id'] ?? '').toString()).toList();
+          await (_database.delete(_database.attractions)
+                ..where((t) => t.id.isNotIn(serverIds) & t.syncStatus.equals('SYNCED')))
+              .go();
+              
           final sqlTime = stopwatch.elapsedMilliseconds;
           return "Pobrano atrakcje (HTTP: ${httpTime}ms, SQL: ${sqlTime}ms)";
         } else {
@@ -211,6 +237,7 @@ class SyncService extends ChangeNotifier {
 
       for (var a in newAttractions) {
         final payload = {
+          'id': a.id,
           'name': a.name,
           'latitude': a.latitude,
           'longitude': a.longitude,
@@ -219,8 +246,10 @@ class SyncService extends ChangeNotifier {
         final response = await _apiClient.post('/admin/attractions', payload);
         
         if (response.statusCode == 200) {
-          // Usuwamy tymczasowy lokalny rekord, zaraz i tak zostanie pobrany z bazy z nowym UUID z serwera
-          await (_database.delete(_database.attractions)..where((t) => t.id.equals(a.id))).go();
+          // Idempotency: the server either created it or ignored the duplicate.
+          // Update the local record to SYNCED.
+          await (_database.update(_database.attractions)..where((t) => t.id.equals(a.id)))
+              .write(const AttractionsCompanion(syncStatus: drift.Value('SYNCED')));
         }
       }
     } catch (e) {

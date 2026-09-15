@@ -202,6 +202,42 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
+  void _deleteAttraction(Attraction attraction, AppDatabase db) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usuń atrakcję'),
+        content: Text('Czy na pewno chcesz usunąć atrakcję "${attraction.name}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Usuń', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    if (attraction.syncStatus == 'PENDING_CREATE') {
+      // Only local, just delete it
+      await (db.delete(db.attractions)..where((t) => t.id.equals(attraction.id))).go();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usunięto z pamięci telefonu.')));
+      return;
+    }
+
+    try {
+      final apiClient = ApiClient();
+      final response = await apiClient.delete('/admin/attractions/${attraction.id}');
+      if (response.statusCode == 200 || response.statusCode == 404) {
+        await (db.delete(db.attractions)..where((t) => t.id.equals(attraction.id))).go();
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Atrakcja usunięta.')));
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Błąd podczas usuwania.')));
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Brak internetu. Nie można usunąć z serwera.')));
+    }
+  }
+
   void _editAttraction(Attraction attraction, AppDatabase db) {
     final nameCtrl = TextEditingController(text: attraction.name);
     final radiusCtrl = TextEditingController(text: attraction.radius.toString());
@@ -289,7 +325,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.explore),
-                  label: const Text('Sprawdź moją aktualną pozycję na mapie', style: TextStyle(fontSize: 16)),
+                  label: const Text('Moja pozycja na mapie', style: TextStyle(fontSize: 16)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1B8B39), // Logo Green
                     foregroundColor: Colors.white,
@@ -305,7 +341,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.radar),
-                  label: const Text('Otwórz Radar Offline', style: TextStyle(fontSize: 16)),
+                  label: const Text('Otwórz radar', style: TextStyle(fontSize: 16)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFEF6C20), // Logo Orange
                     foregroundColor: Colors.white,
@@ -319,7 +355,7 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.settings_input_component, color: Colors.orange),
-              title: const Text('Zarządzanie Czułością Aplikacji (Geofencing)'),
+              title: const Text('Kalibracja'),
               subtitle: const Text('Ustawienia globalne filtrów GPS i buforów czasu'),
               trailing: ElevatedButton(
                 onPressed: () => _showGlobalSettingsDialog(context, db),
@@ -381,24 +417,23 @@ class _AdminScreenState extends State<AdminScreen> {
                   return ListTile(
                     title: Text(attraction.name),
                     subtitle: Text(
-                      isPending ? 'Oczekuje na synchronizację' : (attraction.isActive ? 'Zgrane z serwerem' : 'Nieaktywna'),
+                      isPending ? 'Oczekuje na synchronizację' : (attraction.isActive ? 'Zsynchronizowane' : 'Nieaktywna'),
                       style: TextStyle(color: isPending ? Colors.red : (attraction.isActive ? Colors.green : Colors.grey)),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteAttraction(attraction, db),
+                        ),
+                        IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
                           onPressed: () => _editAttraction(attraction, db),
                         ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.pin_drop),
-                          label: const Text('Zapisz GPS'),
+                        IconButton(
+                          icon: const Icon(Icons.pin_drop, color: Colors.green),
                           onPressed: () => _updateLocation(attraction, db),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepOrange,
-                            foregroundColor: Colors.white,
-                          ),
                         ),
                       ],
                     ),
@@ -470,38 +505,38 @@ class _AdminScreenState extends State<AdminScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Filtr dokładności GPS (m)'),
-                  DropdownButton<int>(
-                    value: gpsAccuracy,
-                    isExpanded: true,
-                    items: [2, 5, 10, 15, 30, 50, 80, 120].map((v) => DropdownMenuItem(value: v, child: Text('$v metrów'))).toList(),
-                    onChanged: (v) => setState(() => gpsAccuracy = v!),
+                  TextFormField(
+                    initialValue: gpsAccuracy.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(suffixText: 'm', border: OutlineInputBorder()),
+                    onChanged: (v) => gpsAccuracy = int.tryParse(v) ?? gpsAccuracy,
                   ),
                   const SizedBox(height: 16),
                   
                   const Text('Bufor wejścia (sekundy)'),
-                  DropdownButton<int>(
-                    value: entryBuffer,
-                    isExpanded: true,
-                    items: [0, 2, 4, 8, 15].map((v) => DropdownMenuItem(value: v, child: Text('$v sek.'))).toList(),
-                    onChanged: (v) => setState(() => entryBuffer = v!),
+                  TextFormField(
+                    initialValue: entryBuffer.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(suffixText: 'sek.', border: OutlineInputBorder()),
+                    onChanged: (v) => entryBuffer = int.tryParse(v) ?? entryBuffer,
                   ),
                   const SizedBox(height: 16),
                   
                   const Text('Bufor wyjścia (sekundy)'),
-                  DropdownButton<int>(
-                    value: exitBuffer,
-                    isExpanded: true,
-                    items: [0, 15, 30, 45, 60, 120].map((v) => DropdownMenuItem(value: v, child: Text('$v sek.'))).toList(),
-                    onChanged: (v) => setState(() => exitBuffer = v!),
+                  TextFormField(
+                    initialValue: exitBuffer.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(suffixText: 'sek.', border: OutlineInputBorder()),
+                    onChanged: (v) => exitBuffer = int.tryParse(v) ?? exitBuffer,
                   ),
                   const SizedBox(height: 16),
                   
                   const Text('Histereza Krawędzi (m)'),
-                  DropdownButton<int>(
-                    value: hysteresis,
-                    isExpanded: true,
-                    items: [0, 5, 10, 15, 20].map((v) => DropdownMenuItem(value: v, child: Text('$v metrów'))).toList(),
-                    onChanged: (v) => setState(() => hysteresis = v!),
+                  TextFormField(
+                    initialValue: hysteresis.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(suffixText: 'm', border: OutlineInputBorder()),
+                    onChanged: (v) => hysteresis = int.tryParse(v) ?? hysteresis,
                   ),
                 ],
               ),
@@ -659,6 +694,8 @@ class __UsersManagementTabState extends State<_UsersManagementTab> {
   }
 
   void _editUser(dynamic user) {
+    final _firstNameCtrl = TextEditingController(text: user['firstName'] ?? '');
+    final _lastNameCtrl = TextEditingController(text: user['lastName'] ?? '');
     final _passwordCtrl = TextEditingController();
     final _pinCtrl = TextEditingController();
     String _role = user['role'] ?? 'WORKER';
@@ -675,6 +712,10 @@ class __UsersManagementTabState extends State<_UsersManagementTab> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Pozostaw puste, jeśli nie chcesz zmieniać.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  const SizedBox(height: 16),
+                  TextField(controller: _firstNameCtrl, decoration: const InputDecoration(labelText: 'Imię')),
+                  const SizedBox(height: 16),
+                  TextField(controller: _lastNameCtrl, decoration: const InputDecoration(labelText: 'Nazwisko')),
                   const SizedBox(height: 16),
                   TextField(controller: _passwordCtrl, decoration: const InputDecoration(labelText: 'Nowe Hasło'), obscureText: true),
                   const SizedBox(height: 16),
@@ -717,6 +758,8 @@ class __UsersManagementTabState extends State<_UsersManagementTab> {
                       try {
                         final apiClient = ApiClient();
                         final response = await apiClient.put('/admin/users/${user['id']}', {
+                          'firstName': _firstNameCtrl.text.trim(),
+                          'lastName': _lastNameCtrl.text.trim(),
                           'password': _passwordCtrl.text.trim(),
                           'pin': _pinCtrl.text.trim(),
                           'role': _role,
@@ -818,6 +861,8 @@ class _AddUserForm extends StatefulWidget {
 }
 
 class __AddUserFormState extends State<_AddUserForm> {
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _pinController = TextEditingController();
@@ -836,6 +881,8 @@ class __AddUserFormState extends State<_AddUserForm> {
     try {
       final apiClient = ApiClient();
       final response = await apiClient.post('/admin/users', {
+        'firstName': _firstNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
         'username': _usernameController.text.trim(),
         'password': _passwordController.text.trim(),
         'pin': _pinController.text.trim(),
@@ -865,6 +912,14 @@ class __AddUserFormState extends State<_AddUserForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text('Dodaj nowego pracownika', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: TextField(controller: _firstNameController, decoration: const InputDecoration(labelText: 'Imię'))),
+              const SizedBox(width: 16),
+              Expanded(child: TextField(controller: _lastNameController, decoration: const InputDecoration(labelText: 'Nazwisko'))),
+            ],
+          ),
           const SizedBox(height: 16),
           TextField(controller: _usernameController, decoration: const InputDecoration(labelText: 'Nazwa użytkownika')),
           const SizedBox(height: 16),
@@ -949,6 +1004,7 @@ class __AddAttractionFormState extends State<_AddAttractionForm> {
       try {
         final apiClient = ApiClient();
         final response = await apiClient.post('/admin/attractions', {
+          'id': newId,
           'name': _nameController.text.trim(),
           'latitude': position.latitude,
           'longitude': position.longitude,
@@ -983,9 +1039,9 @@ class __AddAttractionFormState extends State<_AddAttractionForm> {
         children: [
           const Text('Dodaj nową atrakcję na mapie', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nazwa Atrakcji (np. Stary Dąb)')),
+          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nazwa atrakcji')),
           const SizedBox(height: 16),
-          TextField(controller: _radiusController, decoration: const InputDecoration(labelText: 'Promień wykrywania (w metrach)'), keyboardType: TextInputType.number),
+          TextField(controller: _radiusController, decoration: const InputDecoration(labelText: 'Promień wykrywania (metry)'), keyboardType: TextInputType.number),
           const SizedBox(height: 32),
           _isLoading ? const Center(child: CircularProgressIndicator()) : ElevatedButton.icon(
             icon: const Icon(Icons.my_location),

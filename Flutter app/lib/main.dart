@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'database/database.dart';
@@ -7,11 +8,21 @@ import 'services/geofence_service.dart';
 import 'ui/login_screen.dart';
 import 'ui/attractions_screen.dart';
 import 'ui/surveyor_screen.dart';
-
 import 'services/notification_service.dart';
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+  }
+}
+
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = MyHttpOverrides();
   await NotificationService().init();
   
   final db = AppDatabase();

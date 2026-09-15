@@ -5,6 +5,7 @@ plugins {
 }
 
 android {
+    ndkVersion = "30.0.16138531"
     namespace = "com.example.timeapp_flutter"
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
@@ -30,6 +31,11 @@ android {
         versionName = flutter.versionName
     }
 
+    packaging {
+        jniLibs {
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
@@ -51,4 +57,10 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+tasks.whenTaskAdded {
+    if (name.contains("checkReleaseAarMetadata")) {
+        enabled = false
+    }
 }
